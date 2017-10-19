@@ -16,8 +16,8 @@ class WarcUtil:
     def parseWarcs(self):
         files = self.loadHDFSFiles()
         for wf in files:
-            wf_path = wf.getPath.toString()
-            if "DATA-EXTRACTION-PART" in wf_path: continue
+            wf_path = wf.getPath().toString()
+            if not "DATA-EXTRACTION-PART" in wf_path: continue
             warcText = self.sc.textFile(wf)
             f = warc.open(warcText)
             for record in f:
