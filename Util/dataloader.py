@@ -1,4 +1,4 @@
-import six.models.cPickle as pickle
+import pickle as pickle
 import sys
 import os
 

@@ -53,7 +53,7 @@ class TextDataHandler:
         # base_name = os.path.basename(os.path.normpath(all_doc_path))
         # word_to_id
         word_to_id_pickle = os.path.join(save_dir, 'word_to_id.pkl')
-        self._word_to_id = self._maybe_pickling(word_to_id_pickle, self._build_dict_from_a_set_of_files, self.files)
+        self._word_to_id = self._maybe_pickling(word_to_id_pickle, self._build_dict_from_a_set_of_files, self._filenames)
 
         # id_to_word
         id_to_word_pickle = os.path.join(save_dir, 'id_to_word.pkl')
@@ -103,18 +103,17 @@ class TextDataHandler:
         # string = re.sub(r"[^A-Za-z0-9]", " ", string)
         return string.strip().lower()
 
-    def read_words(self, filename):
+    def read_words(self, counter, filename):
         """
         Tokenization using NLTK
         """
-        tokens = []
         with tf.gfile.GFile(filename, "r") as f:
             # refactor to read line by line
             for docline in f.readlines():
                 # url \t doctext
                 doc = docline.split("\t",1)[1]
-                tokens.append(nltk.word_tokenize(TextDataHandler.clean_str(doc)))
-            return tokens
+                counter.update(nltk.word_tokenize(TextDataHandler.clean_str(doc)))
+            return counter
 
 
 
@@ -174,8 +173,7 @@ class TextDataHandler:
             if cnt % 500 == 0:
                 print(str(cnt) + " out of " + str(file_cnt) + " has been processed")
             # parse documents from file
-            words = self.read_words(filename)
-            counter.update(words)
+            counter = self.read_words(counter,filename)
             cnt += 1
         count_pairs = sorted(counter.items(), key=lambda x: (-x[1], x[0]))
         # if vocab_size == -1:

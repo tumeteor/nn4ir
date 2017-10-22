@@ -138,8 +138,8 @@ class NN:
 
 
 if __name__ == '__main__':
+    nn = NN()
     try:
-        nn = NN()
         nn.simpleNN()
         nn.log.info("done..")
     except Exception as e:
