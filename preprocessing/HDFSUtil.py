@@ -18,7 +18,7 @@ class WarcUtil:
         for wf in files:
             wf_path = wf.getPath().toString()
             if not "DATA-EXTRACTION-PART" in wf_path: continue
-            warcText = self.sc.textFile(wf)
+            warcText = self.sc.textFile(wf_path)
             f = warc.open(warcText)
             for record in f:
                 print record['WARC-Target-URI']

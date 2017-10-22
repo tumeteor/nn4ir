@@ -1,7 +1,7 @@
 import numpy as np
 import tensorflow as tf
-from util.configs import NNConfig
-from util.data2binvec import DataLoader
+from Util.configs import NNConfig
+from Util.dataloader import DataLoader
 import logging
 
 class NN:
@@ -25,10 +25,10 @@ class NN:
                 '''
                 Input data
                 '''
-                tf_train_dataset = None
-                tf_train_labels = None
-                tf_valid_dataset = None
-                tf_test_dataset = None
+                tf_train_dataset = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.input_vector_size))
+                tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
+                tf_valid_dataset = tf.constant(self.valid_dataset)
+                tf_test_dataset = tf.constant(self.test_dataset)
 
 
                 if NNConfig.regularization:
@@ -110,11 +110,16 @@ class NN:
                         self.log.info("Minibatch loss at step %d: %f" %(step, l))
                         self.log.info("Minibatch accuracy: %.3f%%" % session.run(accuracy, feed_dict={pre: predictions,
                                                                                                       lbl: self.valid_labels}))
+                        # self.print_words(predictions, batch_labels)
+                        self.log.info('Validation accuracy:  %.3f%%' % session.run(accuracy,
+                                                                                 feed_dict={
+                                                                                     pre: valid_prediction.eval(),
+                                                                                     lbl: self.valid_labels}))
                         self.log.info("Test accuracy: %.3%%" % session.run(accuracy, feed_dict={pre: test_prediction.eval(),
                                                                                                 lbl: self.test_labels}))
 
 
-                self.print_words(test_prediction.eval(), self.test_labels)
+                #self.print_words(test_prediction.eval(), self.test_labels)
 
     def print_words(self, preds, labels):
         for pred, label in zip(preds, labels):
