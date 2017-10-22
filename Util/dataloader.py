@@ -12,7 +12,7 @@ class DataLoader(object):
     def __init__(self):
         self._d_handler = TextDataHandler(DataConfig.all_doc_path, DataConfig.save_dir_data)
         self._d_handler.truncate_vocab(DataConfig.vocab_size)
-        self._r_datautil = Retrieval_Data_Util(DataConfig.run_path, DataConfig.qrel_path)
+        self._r_datautil = Retrieval_Data_Util(DataConfig.run_path, DataConfig.qrel_path, DataConfig.qtitle_path)
 
     @property
     def d_handler(self):
