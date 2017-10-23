@@ -16,7 +16,7 @@ class NN:
         self.valid_labels, self.test_dataset, self.test_labels = self.d_loader.get_ttv()
 
 
-    def simpleNN(self, mode="/cpu:O"):
+    def simpleNN(self, mode="/cpu:0"):
         self.log = logging.getLogger("Simple NN")
         self.log.info("Create the computational graph..")
         graph = tf.graph()
@@ -46,7 +46,7 @@ class NN:
                     return tf.Variable(tf.zeros(shape))
 
                 w_h = init_weights([self.input_vector_size, NNConfig.num_hidden_nodes])
-                b_h = init_biases([self.output_vector_size])
+                b_h = init_biases([NNConfig.num_hidden_nodes])
 
                 w_o = init_weights([NNConfig.num_hidden_nodes, self.output_vector_size])
                 b_o = init_biases([self.output_vector_size])
@@ -144,7 +144,7 @@ if __name__ == '__main__':
     nn = NN()
     try:
         if args.mode == "gpu":
-            nn.simpleNN(mode="/gpu:O")
+            nn.simpleNN(mode="/gpu:0")
         else: nn.simpleNN()
         nn.log.info("done..")
     except Exception as e:
