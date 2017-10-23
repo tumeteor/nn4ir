@@ -348,6 +348,7 @@ class Retrieval_Data_Util:
         d = []
         q = []
         with codecs.open(self._runRes, "r", encoding='utf-8', errors='ignore') as f:
+            next(f) # skip the first line
             csv_reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
             for row in csv_reader:
                 if int(row[1]) <= top_k:
