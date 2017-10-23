@@ -153,7 +153,8 @@ class TextDataHandler:
             dataset[i] = docdict[dts[i]]
 
             # query - label
-            label_wordIds_vec = self.word_list_to_id_list(self.read_words(qid_title_dict[lbl[i]]))
+            label_tokens = nltk.word_tokeniz(qid_title_dict[lbl[i]])
+            label_wordIds_vec = self.word_list_to_id_list(label_tokens)
             labels[i] = self.get_binary_vector(label_wordIds_vec)
 
         print('Full dataset tensor:', dataset.shape, labels.shape)
