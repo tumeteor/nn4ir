@@ -348,7 +348,7 @@ class Retrieval_Data_Util:
                 #row = [x.decode('utf8') for x in utf8_row]
                 self.qid_title_dict[row[0]] = row[1]
             f.close()
-        with codecs.open(qtitles, "r", encoding='utf-8', errors='ignore') as f:
+        with codecs.open(qrel, "r", encoding='utf-8', errors='ignore') as f:
         #with codecs.open(qrel, "rb") as f:
             csv_reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
             for row in csv_reader:
