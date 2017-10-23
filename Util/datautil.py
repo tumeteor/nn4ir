@@ -119,7 +119,7 @@ class TextDataHandler:
 
                 if doc_count % 500 == 0:
                     print(str(doc_count) + " docs has been processed")
-            return counter
+            return counter, doc_count
 
     def make_arrays(self, nb_rows, vec_size):
         if nb_rows:
@@ -130,11 +130,10 @@ class TextDataHandler:
         return dataset, labels
 
     def prepare_data(self, dts, lbl, qid_title_dict):
-        data_size = len(dts)
-        if data_size != len(lbl):
+        Bing_url_size = len(dts)
+        if Bing_url_size != len(lbl):
             raise 'there is problem in the data...'
         docdict = {}
-        dataset, labels = self.make_arrays(data_size, self.get_vocab_size())
 
         '''
         Retrieve documents from files
@@ -154,9 +153,14 @@ class TextDataHandler:
         '''
         retrieve queries for documents (urls)
         '''
-        for i in range (0, data_size):
+
+
+        dataset, labels = self.make_arrays(len(docdict), self.get_vocab_size())
+        for i in range (0, Bing_url_size):
             # doc
-            dataset[i] = docdict[dts[i]]
+            if dts[i] in docdict.keys:
+                dataset[i] = docdict[dts[i]]
+            else: continue
 
             # query - label
             label_tokens = nltk.word_tokeniz(qid_title_dict[lbl[i]])
@@ -179,7 +183,7 @@ class TextDataHandler:
         cnt = 0
         for filename in filenames:
             # parse documents from file
-            counter = self.read_words(counter,filename, cnt)
+            counter, cnt = self.read_words(counter,filename, cnt)
         count_pairs = sorted(counter.items(), key=lambda x: (-x[1], x[0]))
         # if vocab_size == -1:
         # 	vocab_size = len(count_pairs)
@@ -358,7 +362,8 @@ class Retrieval_Data_Util:
             for utf8_row in csv_reader:
                 row = [x.decode('utf8') for x in utf8_row]
                 if int(row[1]) <= top_k:
-                    d.append(row[4])
+                    # urls in Bing is not normalized yet
+                    d.append(surt(row[4]))
                     q.append(row[0])
             f.close()
         return d, q
