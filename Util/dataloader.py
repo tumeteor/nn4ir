@@ -67,7 +67,7 @@ class DataLoader(object):
                 print('Test set', test_dataset.shape, test_labels.shape)
 
         else:
-            dataset, labels = self._d_handler.prepare_data(DataConfig.all_doc_path)
+            dataset, labels = self.prepare_data()
             train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels = \
                 self.create_datasets(dataset, labels, DataConfig.train_ratio, DataConfig.valid_ratio,
                                      DataConfig.test_ratio)

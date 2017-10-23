@@ -312,7 +312,8 @@ class Retrieval_Data_Util:
         with open(qtitles, 'rb') as f:
             csv_reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
             for utf8_row in csv_reader:
-                row = [x.decode('utf8') for x in utf8_row]
+                row = [x.encode('utf8') for x in utf8_row]
+                print row
                 self.q_id_title_dict[row[0]] = row[1]
             f.close()
 
@@ -320,7 +321,7 @@ class Retrieval_Data_Util:
             csv_reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
             for utf8_row in csv_reader:
                 # only select relevant document-query pairs
-                row = [x.decode('utf8') for x in utf8_row]
+                row = [x.encode('utf8') for x in utf8_row]
                 # if row[3] == '1':
                 # self.doc_query_pairs.append((row[2], row[0]))
                 #if int(row[1]) <= 100:
