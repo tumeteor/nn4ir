@@ -158,9 +158,13 @@ class TextDataHandler:
         dataset, labels = self.make_arrays(len(docdict), self.get_vocab_size())
         for i in range (0, Bing_url_size):
             # doc
-            if dts[i] in docdict.keys:
+            cnt = 0
+            if dts[i] in docdict.keys():
                 dataset[i] = docdict[dts[i]]
-            else: continue
+            else:
+                cnt += 1
+                continue
+            print("number of docs not in archive: {}".format(cnt))
 
             # query - label
             label_tokens = nltk.word_tokeniz(qid_title_dict[lbl[i]])
