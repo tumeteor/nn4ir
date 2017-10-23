@@ -19,7 +19,7 @@ class NN:
     def simpleNN(self, mode="/cpu:0"):
         self.log = logging.getLogger("Simple NN")
         self.log.info("Create the computational graph..")
-        graph = tf.graph()
+        graph = tf.Graph()
         with graph.as_default():
             with tf.device(mode):
                 '''
