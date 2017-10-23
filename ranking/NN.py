@@ -89,7 +89,7 @@ class NN:
                 with tf.name_scope('accuracy'):
                     pre = tf.placeholder("float", shape=[None, self.output_vector_size])
                     lbl = tf.placeholder("float", shape=[None, self.output_vector_size])
-                    accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(pre,lbl), "float"))
+                    accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre,labels=lbl), "float"))
 
             self.log.info("running the session..")
 
