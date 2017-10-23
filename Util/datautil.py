@@ -156,12 +156,20 @@ class TextDataHandler:
         '''
         retrieve queries for documents (urls)
         '''
+        nIns = 0
+        for i in range(0, Bing_url_size - 1):
+            # doc
+            # check key both for docs and labels
+            # Note: some times labels are missing :/
+            if dts[i] in docdict.keys():
+                if lbl[i] in qid_title_dict.keys():
+                    nIns += 1
 
 
-        dataset, labels = self.make_arrays(len(docdict), self.get_vocab_size())
+        dataset, labels = self.make_arrays(nIns, self.get_vocab_size())
         cnt = 0
         j = 0 # dataset idx
-        for i in range (0, Bing_url_size):
+        for i in range (0, Bing_url_size -1):
             # doc
             # check key both for docs and labels
             # Note: some times labels are missing :/
