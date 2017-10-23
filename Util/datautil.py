@@ -163,7 +163,7 @@ class TextDataHandler:
         for i in range (0, Bing_url_size):
             # doc
             if dts[i] in docdict.keys():
-                if lbl[i] in qid_title_dict.keys:
+                if lbl[i] in qid_title_dict.keys():
                     dataset[i] = docdict[dts[i]]
                 else:
                     continue
