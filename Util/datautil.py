@@ -160,12 +160,13 @@ class TextDataHandler:
 
         dataset, labels = self.make_arrays(len(docdict), self.get_vocab_size())
         cnt = 0
-        incnt = 0
         for i in range (0, Bing_url_size):
             # doc
             if dts[i] in docdict.keys():
-                dataset[i] = docdict[dts[i]]
-                incnt += 1
+                if lbl[i] in qid_title_dict.keys:
+                    dataset[i] = docdict[dts[i]]
+                else:
+                    continue
             else:
                 cnt += 1
                 continue
@@ -175,7 +176,6 @@ class TextDataHandler:
             label_wordIds_vec = self.word_list_to_id_list(label_tokens)
             labels[i] = self.get_binary_vector(label_wordIds_vec)
         print("number of docs not in archive: {}".format(cnt))
-        print("number of docs in archive: {}".format(incnt))
 
         print('Full dataset tensor:', dataset.shape, labels.shape)
         # print('Mean:', np.mean(dataset))
