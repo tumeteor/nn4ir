@@ -112,7 +112,9 @@ class TextDataHandler:
             for docline in f.readlines():
                 # url \t doctext
                 doc = docline.split("\t",1)[1]
-                counter.update(nltk.word_tokenize(TextDataHandler.clean_str(doc)))
+                doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc))
+                print "number of tokens: {}".format(len(doc_tokens))
+                counter.update(doc_tokens)
             return counter
 
     def make_arrays(self, nb_rows, vec_size):
