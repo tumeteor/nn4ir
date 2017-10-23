@@ -103,7 +103,7 @@ class TextDataHandler:
         # string = re.sub(r"[^A-Za-z0-9]", " ", string)
         return string.strip().lower()
 
-    def read_words(self, counter, filename):
+    def read_words(self, counter, filename, doc_count):
         """
         Tokenization using NLTK
         """
@@ -115,6 +115,10 @@ class TextDataHandler:
                 doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc))
                 print "number of tokens: {}".format(len(doc_tokens))
                 counter.update(doc_tokens)
+                doc_count += 1
+
+                if doc_count % 500 == 0:
+                    print(str(doc_count) + " docs has been processed")
             return counter
 
     def make_arrays(self, nb_rows, vec_size):
@@ -175,11 +179,8 @@ class TextDataHandler:
         file_cnt = len(filenames)
         cnt = 0
         for filename in filenames:
-            if cnt % 500 == 0:
-                print(str(cnt) + " out of " + str(file_cnt) + " has been processed")
             # parse documents from file
-            counter = self.read_words(counter,filename)
-            cnt += 1
+            counter = self.read_words(counter,filename, cnt)
         count_pairs = sorted(counter.items(), key=lambda x: (-x[1], x[0]))
         # if vocab_size == -1:
         # 	vocab_size = len(count_pairs)
