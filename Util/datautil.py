@@ -115,17 +115,20 @@ class TextDataHandler:
                 counter.update(nltk.word_tokenize(TextDataHandler.clean_str(doc)))
             return counter
 
-
-
-
+    def make_arrays(self, nb_rows, vec_size):
+        if nb_rows:
+            dataset = np.ndarray((nb_rows, vec_size), dtype=np.float32)
+            labels = np.ndarray((nb_rows, vec_size), dtype=np.float32)
+        else:
+            dataset, labels = None, None
+        return dataset, labels
 
     def prepare_data(self, dts, lbl, qid_title_dict):
         data_size = len(dts)
         if data_size != len(lbl):
             raise 'there is problem in the data...'
         docdict = {}
-        dataset = []
-        labels = []
+        dataset, labels = self.make_arrays(data_size, self.get_vocab_size())
 
         '''
         Retrieve documents from files
@@ -140,9 +143,8 @@ class TextDataHandler:
                     docid = doc[0]
                     doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc[1]))
 
-                data_wordIds_vec = self._d_handler.word_list_to_id_list()
-                docdict[docid] = self._d_handler.get_binary_vector(data_wordIds_vec)
-
+                    data_wordIds_vec = self.word_list_to_id_list(doc_tokens)
+                    docdict[docid] = self.get_binary_vector(data_wordIds_vec)
         '''
         retrieve queries for documents (urls)
         '''
@@ -151,8 +153,8 @@ class TextDataHandler:
             dataset[i] = docdict[dts[i]]
 
             # query - label
-            label_wordIds_vec = self._d_handler.word_list_to_id_list(self._d_handler.read_words(qid_title_dict[lbl[i]]))
-            labels[i] = self._d_handler.get_binary_vector(label_wordIds_vec)
+            label_wordIds_vec = self.word_list_to_id_list(self.read_words(qid_title_dict[lbl[i]]))
+            labels[i] = self.get_binary_vector(label_wordIds_vec)
 
         print('Full dataset tensor:', dataset.shape, labels.shape)
         # print('Mean:', np.mean(dataset))
