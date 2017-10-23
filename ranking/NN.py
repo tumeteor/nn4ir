@@ -3,7 +3,7 @@ import tensorflow as tf
 from Util.configs import NNConfig
 from Util.dataloader import DataLoader
 import logging
-
+from argparse import ArgumentParser
 class NN:
     def __init__(self):
         logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
@@ -16,12 +16,12 @@ class NN:
         self.valid_labels, self.test_dataset, self.test_labels = self.d_loader.get_ttv()
 
 
-    def simpleNN(self):
+    def simpleNN(self, mode="/cpu:O"):
         self.log = logging.getLogger("Simple NN")
         self.log.info("Create the computational graph..")
         graph = tf.graph()
         with graph.as_default():
-            with tf.device("/cpu:O"):
+            with tf.device(mode):
                 '''
                 Input data
                 '''
@@ -138,9 +138,14 @@ class NN:
 
 
 if __name__ == '__main__':
+    parser = ArgumentParser(description='Required arguments')
+    parser.add_argument('-m', '--mode', help='computation mode', required=False)
+    args = parser.parse_args()
     nn = NN()
     try:
-        nn.simpleNN()
+        if args.mode == "gpu":
+            nn.simpleNN(mode="/gpu:O")
+        else: nn.simpleNN()
         nn.log.info("done..")
     except Exception as e:
         nn.log.exception(e)
