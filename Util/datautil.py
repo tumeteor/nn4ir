@@ -1,8 +1,8 @@
+# -*- coding: utf-8 -*-
 import codecs
 import fnmatch
 import os
 import random
-import sys
 import re
 from collections import *
 import nltk
@@ -112,7 +112,7 @@ class TextDataHandler:
             for docline in f.readlines():
                 # url \t doctext
                 doc = docline.split("\t",1)[1]
-                doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc))
+                doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc),language='german')
                 # print "number of tokens: {}".format(len(doc_tokens))
                 counter.update(doc_tokens)
                 doc_count += 1
@@ -146,7 +146,7 @@ class TextDataHandler:
                     # url \t doctext
                     doc = docline.split("\t", 1)
                     docid = doc[0]
-                    doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc[1]))
+                    doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc[1]),language='german')
 
                     data_wordIds_vec = self.word_list_to_id_list(doc_tokens)
                     docdict[docid] = self.get_binary_vector(data_wordIds_vec)
@@ -167,7 +167,7 @@ class TextDataHandler:
             print("number of docs not in archive: {}".format(cnt))
 
             # query - label
-            label_tokens = nltk.word_tokeniz(qid_title_dict[lbl[i]])
+            label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]],language='german')
             label_wordIds_vec = self.word_list_to_id_list(label_tokens)
             labels[i] = self.get_binary_vector(label_wordIds_vec)
 
