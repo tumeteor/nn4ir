@@ -10,6 +10,9 @@ from configs import DataConfig
 
 class DataLoader(object):
     def __init__(self):
+        logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
+                            datefmt='%d.%m.%Y %I:%M:%S %p', level=logging.INFO)
+        self.log = logging.getLogger("Data Loader")
         self._d_handler = TextDataHandler(DataConfig.all_doc_path, DataConfig.save_dir_data)
         self._d_handler.truncate_vocab(DataConfig.vocab_size)
         self._r_datautil = Retrieval_Data_Util(DataConfig.run_path, DataConfig.qrel_path, DataConfig.qtitle_path)
@@ -46,7 +49,7 @@ class DataLoader(object):
         '''
         dts, lbl = self._r_datautil.get_pseudo_rel_qd_Bing(top_k=100)
         return self._d_handler.prepare_data(dts=dts, lbl=lbl,
-                                            qid_title_dict=self._r_datautil.q_id_title_dict)
+                                            qid_title_dict=self._r_datautil.qid_title_dict)
 
     def get_ttv(self):
         pickle_file = os.path.join(DataConfig.save_dir_data, 'robust_binary_vec.pkl')

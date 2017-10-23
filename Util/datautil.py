@@ -48,7 +48,9 @@ class TextDataHandler:
     _filenames = None
 
     def __init__(self, all_doc_path, save_dir):
-
+        logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
+                            datefmt='%d.%m.%Y %I:%M:%S %p', level=logging.INFO)
+        self.log = logging.getLogger("Data Processing")
         self._filenames = Utilities.recursive_glob(all_doc_path, "*")
         Utilities.create_file_dir(save_dir)
         # base_name = os.path.basename(os.path.normpath(all_doc_path))
@@ -81,7 +83,7 @@ class TextDataHandler:
             with open(pickle_file_name, 'wb') as f:
                 pickle.dump(data, f, pickle.HIGHEST_PROTOCOL)
         except Exception as e:
-            logging.error('Unable to save data to', pickle_file_name, ':', e)
+            self.log.error('Unable to save data to', pickle_file_name, ':', e)
 
     @staticmethod
     def clean_str(string):
@@ -157,20 +159,23 @@ class TextDataHandler:
 
 
         dataset, labels = self.make_arrays(len(docdict), self.get_vocab_size())
+        cnt = 0
+        incnt = 0
         for i in range (0, Bing_url_size):
             # doc
-            cnt = 0
             if dts[i] in docdict.keys():
                 dataset[i] = docdict[dts[i]]
+                incnt += 1
             else:
                 cnt += 1
                 continue
-            print("number of docs not in archive: {}".format(cnt))
 
             # query - label
             label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]],language='german')
             label_wordIds_vec = self.word_list_to_id_list(label_tokens)
             labels[i] = self.get_binary_vector(label_wordIds_vec)
+        print("number of docs not in archive: {}".format(cnt))
+        print("number of docs in archive: {}".format(incnt))
 
         print('Full dataset tensor:', dataset.shape, labels.shape)
         # print('Mean:', np.mean(dataset))
@@ -320,14 +325,14 @@ class Retrieval_Data_Util:
     # TODO: for Bing rank: take top-50
     # query_id \t rank \t title \t description \t url \t query_id (tab delimiter)
     doc_query_pairs = []
-    q_id_title_dict = {}
+    qid_title_dict = {}
 
     def __init__(self, runres, qrel, qtitles):
         with open(qtitles, 'rb') as f:
             csv_reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
             for utf8_row in csv_reader:
                 row = [x.decode('utf8') for x in utf8_row]
-                self.q_id_title_dict[row[0]] = row[1]
+                self.qid_title_dict[row[0]] = row[1]
             f.close()
 
         with codecs.open(qrel, "rb") as f:
