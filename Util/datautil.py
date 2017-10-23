@@ -309,16 +309,18 @@ class Retrieval_Data_Util:
     q_id_title_dict = {}
 
     def __init__(self, runres, qrel, qtitles):
-        with codecs.open(qtitles, "r", encoding='utf-8', errors='ignore') as f:
+        with open(qtitles, 'rb') as f:
             csv_reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
-            for row in csv_reader:
+            for utf8_row in csv_reader:
+                row = [x.decode('utf8') for x in utf8_row]
                 self.q_id_title_dict[row[0]] = row[1]
             f.close()
 
-        with codecs.open(qrel, "r", encoding='utf-8', errors='ignore') as f:
+        with codecs.open(qrel, "rb") as f:
             csv_reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
-            for row in csv_reader:
+            for utf8_row in csv_reader:
                 # only select relevant document-query pairs
+                row = [x.decode('utf8') for x in utf8_row]
                 # if row[3] == '1':
                 # self.doc_query_pairs.append((row[2], row[0]))
                 #if int(row[1]) <= 100:
@@ -326,7 +328,6 @@ class Retrieval_Data_Util:
 
                 # TODO: for now one-to-one query-url pair
                 # self.doc_query_dict[surt(row[4])] = row[0]
-
 
             f.close()
         self._runRes = runres
