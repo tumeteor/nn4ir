@@ -113,7 +113,7 @@ class TextDataHandler:
                 # url \t doctext
                 doc = docline.split("\t",1)[1]
                 doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc))
-                print "number of tokens: {}".format(len(doc_tokens))
+                # print "number of tokens: {}".format(len(doc_tokens))
                 counter.update(doc_tokens)
                 doc_count += 1
 
@@ -176,7 +176,6 @@ class TextDataHandler:
         :return:
         '''
         counter = Counter()
-        file_cnt = len(filenames)
         cnt = 0
         for filename in filenames:
             # parse documents from file
