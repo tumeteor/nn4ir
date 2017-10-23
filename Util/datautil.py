@@ -340,18 +340,21 @@ class Retrieval_Data_Util:
     qid_title_dict = {}
 
     def __init__(self, runres, qrel, qtitles):
-        with open(qtitles, 'rb') as f:
+        with codecs.open(qtitles, "r", encoding='utf-8', errors='ignore') as f:
+        #with open(qtitles, 'rb') as f:
             csv_reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
-            for utf8_row in csv_reader:
-                row = [x.decode('utf8') for x in utf8_row]
+            for row in csv_reader:
+            #for utf8_row in csv_reader:
+                #row = [x.decode('utf8') for x in utf8_row]
                 self.qid_title_dict[row[0]] = row[1]
             f.close()
-
-        with codecs.open(qrel, "rb") as f:
+        with codecs.open(qtitles, "r", encoding='utf-8', errors='ignore') as f:
+        #with codecs.open(qrel, "rb") as f:
             csv_reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
-            for utf8_row in csv_reader:
+            for row in csv_reader:
+            #for utf8_row in csv_reader:
                 # only select relevant document-query pairs
-                row = [x.decode('utf8') for x in utf8_row]
+                #row = [x.decode('utf8') for x in utf8_row]
                 # if row[3] == '1':
                 # self.doc_query_pairs.append((row[2], row[0]))
                 #if int(row[1]) <= 100:
@@ -378,11 +381,13 @@ class Retrieval_Data_Util:
         '''
         d = []
         q = []
-        with open(self._runRes, "rb") as f:
+        with codecs.open(self._runRes, "r", encoding='utf-8', errors='ignore') as f:
+        #with open(self._runRes, "rb") as f:
             next(f) # skip the first line
             csv_reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
-            for utf8_row in csv_reader:
-                row = [x.decode('utf8') for x in utf8_row]
+            for row in csv_reader:
+            #for utf8_row in csv_reader:
+                #row = [x.decode('utf8') for x in utf8_row]
                 if int(row[1]) <= top_k:
                     # urls in Bing is not normalized yet
                     d.append(surt(row[4]))
