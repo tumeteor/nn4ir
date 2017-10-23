@@ -1,4 +1,4 @@
-import pickle as pickle
+import six.moves.cPickle as pickle
 import sys
 import os
 
