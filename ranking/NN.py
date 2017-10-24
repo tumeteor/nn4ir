@@ -118,11 +118,15 @@ class NN:
                                                                                  feed_dict={
                                                                                      pre: valid_prediction.eval(),
                                                                                      lbl: self.valid_labels}))
-                self.log.info("Test accuracy: %.3%%" % session.run(accuracy, feed_dict={pre: test_prediction.eval(),
+                        print ("valid prediction shape: {}".format(tf.shape(valid_prediction)))
+                        print("valid label shape: {}".format(self.valid_labels.shape))
+                        print("test prediction shape: {}".format(tf.shape(test_prediction)))
+                        print("test label shape: {}".format(self.test_labels.shape))
+                        self.log.info("Test accuracy: %.3%%" % session.run(accuracy, feed_dict={pre: test_prediction.eval(),
                                                                                                 lbl: self.test_labels}))
 
 
-                self.print_words(test_prediction.eval(), self.test_labels)
+              #  self.print_words(test_prediction.eval(), self.test_labels)
 
     def print_words(self, preds, labels):
         for pred, label in zip(preds, labels):
