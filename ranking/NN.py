@@ -9,6 +9,9 @@ class NN:
         logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                             datefmt='%d.%m.%Y %I:%M:%S %p', level=logging.INFO)
 
+
+        self.log = logging.getLogger("Simple NN")
+
         self.d_loader = DataLoader()
         self.input_vector_size = self.d_loader.d_handler.get_vocab_size()
         self.output_vector_size = self.d_loader.d_handler.get_vocab_size()
@@ -17,7 +20,7 @@ class NN:
 
 
     def simpleNN(self, mode="/cpu:0"):
-        self.log = logging.getLogger("Simple NN")
+
         self.log.info("Create the computational graph..")
         graph = tf.Graph()
         with graph.as_default():
@@ -89,7 +92,7 @@ class NN:
                 with tf.name_scope('accuracy'):
                     pre = tf.placeholder("float", shape=[None, self.output_vector_size])
                     lbl = tf.placeholder("float", shape=[None, self.output_vector_size])
-                    accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre,labels=lbl), "float"))
+                    accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=ls,labels=lbl), "float"))
 
             self.log.info("running the session..")
 
@@ -115,7 +118,7 @@ class NN:
                                                                                  feed_dict={
                                                                                      pre: valid_prediction.eval(),
                                                                                      lbl: self.valid_labels}))
-                        self.log.info("Test accuracy: %.3%%" % session.run(accuracy, feed_dict={pre: test_prediction.eval(),
+                self.log.info("Test accuracy: %.3%%" % session.run(accuracy, feed_dict={pre: test_prediction.eval(),
                                                                                                 lbl: self.test_labels}))
 
 
