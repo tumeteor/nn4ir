@@ -92,7 +92,7 @@ class NN:
                 with tf.name_scope('accuracy'):
                     pre = tf.placeholder("float", shape=[None, self.output_vector_size])
                     lbl = tf.placeholder("float", shape=[None, self.output_vector_size])
-                    accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=ls,labels=lbl), "float"))
+                    accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre,labels=lbl), "float"))
 
             self.log.info("running the session..")
 
@@ -122,7 +122,7 @@ class NN:
                                                                                                 lbl: self.test_labels}))
 
 
-                #self.print_words(test_prediction.eval(), self.test_labels)
+                self.print_words(test_prediction.eval(), self.test_labels)
 
     def print_words(self, preds, labels):
         for pred, label in zip(preds, labels):
