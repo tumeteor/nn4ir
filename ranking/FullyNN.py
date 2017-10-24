@@ -76,7 +76,7 @@ class NN(object):
 
 
                 logits = model(tf_train_dataset, w_h, b_h, w_o, b_o, True)
-                loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits, tf_train_labels))
+                loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
                 # tf.nn.sigmoid_cross_entropy_with_logits instead of tf.nn.softmax_cross_entropy_with_logits for multi-label case
                 if NNConfig.regularization:
                     loss += beta_regu * (tf.nn.l2_loss(w_h) + tf.nn.l2_loss(w_o))
@@ -96,7 +96,7 @@ class NN(object):
                 with tf.name_scope('accuracy'):
                     pre = tf.placeholder("float", shape=[None, self.output_vector_size])
                     lbl = tf.placeholder("float", shape=[None, self.output_vector_size])
-                    accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(pre, lbl), "float"))
+                    accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
 
         logger.info('running the session...')
         with tf.Session(graph=graph,config=tf.ConfigProto(log_device_placement=True)) as session:
@@ -184,7 +184,7 @@ class NN(object):
                     instances_loss = tf.nn.sampled_softmax_loss(w_o, b_o, tf_train_dataset, tf_train_labels,
                                                                 NNConfig.num_sampled, self.output_vector_size, num_true=10)
                 else:
-                    instances_loss = tf.nn.sigmoid_cross_entropy_with_logits(logits, tf_train_labels)
+                    instances_loss = tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels)
                     print('no candidate sampling....')
                 loss = tf.reduce_mean(instances_loss)
 
@@ -206,7 +206,7 @@ class NN(object):
                 with tf.name_scope('accuracy'):
                     pre = tf.placeholder("float", shape=[None, self.output_vector_size])
                     lbl = tf.placeholder("float", shape=[None, self.output_vector_size])
-                    accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(pre, lbl), "float"))
+                    accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
 
         logger.info('running the session...')
         with tf.Session(graph=graph,config=tf.ConfigProto(log_device_placement=True)) as session:
