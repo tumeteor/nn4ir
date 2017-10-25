@@ -39,8 +39,17 @@ class NN(object):
                 # Input data
                 tf_train_dataset = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.input_vector_size))
                 tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
-                tf_valid_dataset = tf.constant(self.valid_dataset)
-                tf_test_dataset = tf.constant(self.test_dataset)
+
+                # Do not load data to constant!
+                # tf_valid_dataset = tf.constant(self.valid_dataset)
+                # tf_test_dataset = tf.constant(self.test_dataset)
+
+                # create a placeholder
+                tf_valid_dataset_init = tf.placeholder(tf.float32, shape=self.valid_dataset.shape)
+                tf_valid_dataset = tf.Variable(tf_valid_dataset_init)
+
+                tf_test_dataset_init = tf.placeholder(tf.float32, shape=self.test_dataset.shape)
+                tf_test_dataset = tf.Variable(tf_test_dataset_init)
 
                 if NNConfig.regularization:
                     beta_regu = tf.placeholder(tf.float32)
@@ -100,7 +109,8 @@ class NN(object):
 
         logger.info('running the session...')
         with tf.Session(graph=graph,config=tf.ConfigProto(log_device_placement=True)) as session:
-            tf.initialize_all_variables().run()
+            session.run(tf.global_variables_initializer(), feed_dict={tf_valid_dataset_init: self.valid_dataset,
+                                                                      tf_test_dataset_init: self.test_dataset})
             logger.info('Initialized')
             for step in range(NNConfig.num_steps):
                 offset = (step * NNConfig.batch_size) % (self.train_labels.shape[0] - NNConfig.batch_size)
@@ -245,7 +255,7 @@ class NN(object):
     def simple_NN_w_embedding(self):
         logger.info("creating the computational graph...")
         graph = tf.Graph()
-        sess = tf.Session(graph=graph)
+        #sess = tf.Session(graph=graph)
         with graph.as_default():
             with tf.device("/cpu:0"):
                 # Input data
@@ -295,8 +305,6 @@ class NN(object):
                 w_o = init_weights([NNConfig.num_hidden_nodes, self.output_vector_size])
                 b_o = init_biases([self.output_vector_size])
 
-                sess.run(tf.global_variables_initializer(), feed_dict={tf_valid_dataset_init: self.valid_dataset,
-                                                                       tf_test_dataset_init: self.test_dataset})
 
                 # Training computation
                 def model(dataset, w_h, b_h, w_o, b_o, train):
@@ -335,8 +343,9 @@ class NN(object):
 
         logger.info('running the session...')
         with tf.Session(graph=graph,config=tf.ConfigProto(log_device_placement=True)) as session:
-            #tf.initialize_all_variables().run()
-            #logger.info('Initialized')
+            session.run(tf.global_variables_initializer(), feed_dict={tf_valid_dataset_init: self.valid_dataset,
+                                                                      tf_test_dataset_init: self.test_dataset})
+            logger.info('Initialized')
             for step in range(NNConfig.num_steps):
                 offset = (step * NNConfig.batch_size) % (self.train_labels.shape[0] - NNConfig.batch_size)
                 batch_data = self.train_dataset[offset:(offset + NNConfig.batch_size), :]
