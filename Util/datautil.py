@@ -346,6 +346,7 @@ class Retrieval_Data_Util:
             for row in csv_reader:
             #for utf8_row in csv_reader:
                 #row = [x.decode('utf8') for x in utf8_row]
+                if len(row) < 2: continue
                 self.qid_title_dict[row[0]] = row[1]
             f.close()
         with codecs.open(qrel, "r", encoding='utf-8', errors='ignore') as f:
@@ -358,6 +359,7 @@ class Retrieval_Data_Util:
                 # if row[3] == '1':
                 # self.doc_query_pairs.append((row[2], row[0]))
                 #if int(row[1]) <= 100:
+                if len(row) < 5: continue
                 self.doc_query_pairs.append((surt(row[4]), row[0]))
 
                 # TODO: for now one-to-one query-url pair
