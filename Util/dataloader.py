@@ -4,8 +4,8 @@ import os
 
 sys.path.insert(0, os.path.abspath('..'))
 import logging
-from datautil import Retrieval_Data_Util, TextDataHandler, Utilities
-from configs import DataConfig
+from Util.datautil import Retrieval_Data_Util, TextDataHandler, Utilities
+from Util.configs import DataConfig
 
 
 class DataLoader(object):
