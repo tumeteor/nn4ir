@@ -11,6 +11,7 @@ class DataConfig():
     test_ratio = .15
 
 class NNConfig():
+    embedding_size = 300
     summary_steps = 100
     num_hidden_nodes = 1024
     batch_size = 100
