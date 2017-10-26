@@ -37,22 +37,22 @@ class NN(object):
         with graph.as_default():
             with tf.device("/cpu:0"):
                 # Input data
-                tf_train_dataset = tf.placeholder(tf.int64, shape=(NNConfig.batch_size, self.input_vector_size))
-                tf_train_labels = tf.placeholder(tf.int64, shape=(NNConfig.batch_size, self.output_vector_size))
+                tf_train_dataset = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.input_vector_size))
+                tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
 
                 # Do not load data to constant!
                 # tf_valid_dataset = tf.constant(self.valid_dataset)
                 # tf_test_dataset = tf.constant(self.test_dataset)
 
                 # create a placeholder
-                tf_valid_dataset_init = tf.placeholder(tf.int64, shape=self.valid_dataset.shape)
+                tf_valid_dataset_init = tf.placeholder(tf.float32, shape=self.valid_dataset.shape)
                 tf_valid_dataset = tf.Variable(tf_valid_dataset_init)
 
-                tf_test_dataset_init = tf.placeholder(tf.int64, shape=self.test_dataset.shape)
+                tf_test_dataset_init = tf.placeholder(tf.float32, shape=self.test_dataset.shape)
                 tf_test_dataset = tf.Variable(tf_test_dataset_init)
 
                 if NNConfig.regularization:
-                    beta_regu = tf.placeholder(tf.int64)
+                    beta_regu = tf.placeholder(tf.float32)
 
                 if NNConfig.learning_rate_decay:
                     global_step = tf.Variable(0)
@@ -64,7 +64,6 @@ class NN(object):
 
                     vocab = []
                     embd = []
-
                     for word in self.d_loader.d_handler.get_vocab():
                         if word in model:
                             embd.append(model[word])
@@ -84,13 +83,15 @@ class NN(object):
                 W = tf.Variable(tf.constant(0.0, shape=[embed_vocab_size, embedding_dim]),
                                 trainable=False, name="W")
 
-                embedding_placeholder = tf.placeholder(tf.int64, [embed_vocab_size, NNConfig.embedding_dim])
+                embedding_placeholder = tf.placeholder(tf.float32, [embed_vocab_size, NNConfig.embedding_dim])
                 embedding_init = W.assign(embedding_placeholder)
 
 
-                train_embed = tf.nn.embedding_lookup(W, tf_train_dataset)
-                valid_embed = tf.nn.embedding_lookup(W, tf_valid_dataset)
-                test_embed = tf.nn.embedding_lookup(W, tf_test_dataset)
+
+
+                train_embed = [tf.nn.embedding_lookup(W, doc) for doc in tf_train_dataset]
+                valid_embed = [tf.nn.embedding_lookup(W, doc) for doc in tf_valid_dataset]
+                test_embed = [tf.nn.embedding_lookup(W, doc) for doc in tf_test_dataset]
 
                 # Look up embeddings for inputs.
                 # train_embeddings = tf.Variable(
