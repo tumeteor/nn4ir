@@ -13,7 +13,7 @@ from Util.configs import NNConfig, DataConfig
 
 import logging
 logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
-fileHandler = logging.FileHandler("{0}/{1}.log".format("./", "Fullyconnected_NN"))
+fileHandler = logging.FileHandler("{0}/{1}.log".format("./", "FullyNN_pretrained"))
 fileHandler.setFormatter(logFormatter)
 consoleHandler = logging.StreamHandler()
 consoleHandler.setFormatter(logFormatter)
