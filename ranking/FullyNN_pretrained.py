@@ -87,9 +87,10 @@ class NN(object):
                 embedding_init = W.assign(embedding_placeholder)
 
 
-                train_embed = tf.nn.embedding_lookup(W, tf_train_dataset)
-                valid_embed = tf.nn.embedding_lookup(W, tf_valid_dataset)
-                test_embed = tf.nn.embedding_lookup(W, tf_test_dataset)
+                train_embed = tf.expand_dims(tf.nn.embedding_lookup(W, tf_train_dataset), -1)
+                print(train_embed.shape)
+                valid_embed = tf.expand_dims(tf.nn.embedding_lookup(W, tf_valid_dataset), -1)
+                test_embed = tf.expand_dims(tf.nn.embedding_lookup(W, tf_test_dataset), -1)
 
                 # Look up embeddings for inputs.
                 # train_embeddings = tf.Variable(
