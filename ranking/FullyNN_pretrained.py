@@ -184,4 +184,14 @@ class NN(object):
                     logger.info('Test accuracy:  %.3f%%' % session.run(accuracy,
                                                                        feed_dict={pre: test_prediction.eval(),
                                                                                   lbl: self.test_labels}))
-            self.print_words(test_prediction.eval(), self.test_labels)
+
+
+
+if __name__ == '__main__':
+    try:
+        nn = NN()
+        nn.simple_NN_w_embedding()
+        logger.info("done...")
+    except Exception as e:
+        logger.exception(e)
+        raise
