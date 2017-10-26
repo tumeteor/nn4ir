@@ -89,9 +89,9 @@ class NN(object):
 
 
 
-                train_embed = [tf.nn.embedding_lookup(W, doc) for doc in tf_train_dataset]
-                valid_embed = [tf.nn.embedding_lookup(W, doc) for doc in tf_valid_dataset]
-                test_embed = [tf.nn.embedding_lookup(W, doc) for doc in tf_test_dataset]
+                train_embed = [tf.nn.embedding_lookup(W, doc) for doc in self.train_dataset]
+                valid_embed = [tf.nn.embedding_lookup(W, doc) for doc in self.valid_dataset]
+                test_embed = [tf.nn.embedding_lookup(W, doc) for doc in self.test_dataset]
 
                 # Look up embeddings for inputs.
                 # train_embeddings = tf.Variable(
