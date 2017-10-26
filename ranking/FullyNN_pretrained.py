@@ -5,7 +5,7 @@ import sys
 import os
 import math
 sys.path.insert(0, os.path.abspath('..'))
-from tensorflow.contrib import learn
+import csv
 
 from Util.dataloader import DataLoader
 from Util.configs import NNConfig, DataConfig
@@ -60,10 +60,9 @@ class NN(object):
                 def loadGloVe(glove_file_path):
                     vocab = []
                     embd = []
-                    file = open(glove_file_path, 'r')
-                    for line in file.readlines():
-                        row = line.strip().split('\t')
-                        print(len(row))
+                    f = open(glove_file_path, 'r')
+                    csv_reader = csv.reader(f, delimiter='\t')
+                    for row in csv_reader:
                         word_id = self.d_loader.d_handler.get_id_of_word(row[1])
                         if word_id != 0:
                             vocab.append(word_id)
