@@ -5,7 +5,7 @@ class DataConfig():
     qrel_path = "/home/nguyen/nn4ir/data/docs1k/top1k.qu.labels"
     run_path = "/home/nguyen/nn4ir/data/docs1k/top1k.qu.labels"
     qtitle_path = "/home/nguyen/nn4ir/data/docs1k/top1k.qtitles"
-    glove_file_path = "/home/nguyen/nn4ir/embeddings/de_wiki/de.tsv"
+    glove_file_path = "/home/nguyen/nn4ir/embeddings/de_wiki/de.bin"
     vocab_size = 100000
     train_ratio = .7
     valid_ratio = .15
