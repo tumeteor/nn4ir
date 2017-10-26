@@ -63,6 +63,7 @@ class NN(object):
                     file = open(glove_file_path, 'r')
                     for line in file.readlines():
                         row = line.strip().split('\t')
+                        print(len(row))
                         word_id = self.d_loader.d_handler.get_id_of_word(row[1])
                         if word_id != 0:
                             vocab.append(word_id)
