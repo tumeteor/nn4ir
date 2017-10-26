@@ -24,11 +24,11 @@ logger.addHandler(consoleHandler)
 
 class NN(object):
     def __init__(self):
-        self.d_loader = DataLoader()
+        self.d_loader = DataLoader(pretrained=True)
         self.input_vector_size = self.d_loader.d_handler.get_vocab_size()
         self.output_vector_size = self.d_loader.d_handler.get_vocab_size()
         self.train_dataset, self.train_labels, self.valid_dataset, \
-        self.valid_labels, self.test_dataset, self.test_labels = self.d_loader.get_ttv(pretrained=True)
+        self.valid_labels, self.test_dataset, self.test_labels = self.d_loader.get_ttv()
 
     def simple_NN_w_embedding(self):
         logger.info("creating the computational graph...")

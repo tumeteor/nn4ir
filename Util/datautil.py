@@ -228,7 +228,8 @@ class TextDataHandler:
                 if lbl[i] in qid_title_dict.keys():
                     nIns += 1
 
-        dataset, labels = self.make_arrays(nIns, self.get_vocab_size())
+        dataset = list()
+        labels = list()
         cnt = 0
         j = 0  # dataset idx
         for i in range(0, Bing_url_size - 1):
@@ -237,7 +238,7 @@ class TextDataHandler:
             # Note: some times labels are missing :/
             if dts[i] in docdict.keys():
                 if lbl[i] in qid_title_dict.keys():
-                    dataset[j] = docdict[dts[i]]
+                    dataset.append(docdict[dts[i]])
                 else:
                     continue
             else:
@@ -246,7 +247,7 @@ class TextDataHandler:
 
             # query - label
             label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
-            labels[j] = self.get_binary_vector(label_tokens)
+            labels.append(self.get_binary_vector(label_tokens))
             j += 1
         print("number of docs not in archive: {}".format(cnt))
 
