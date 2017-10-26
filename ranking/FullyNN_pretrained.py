@@ -65,7 +65,7 @@ class NN(object):
                         row = line.strip().split('\t')
                         word_id = self.d_loader.d_handler.get_id_of_word(row[1])
                         if word_id != 0:
-                            vocab.append(row[word_id])
+                            vocab.append(word_id)
                         else:
                             continue
                         embd.append(row[2])
