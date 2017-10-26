@@ -194,6 +194,65 @@ class TextDataHandler:
         # print('Standard deviation:', np.std(dataset))
         return dataset, labels
 
+    def prepare_data_for_pretrained_embed(self, dts, lbl, qid_title_dict):
+        Bing_url_size = len(dts)
+        if Bing_url_size != len(lbl):
+            raise 'there is problem in the data...'
+        docdict = {}
+
+        '''
+        Retrieve documents from files
+        TODO: not so efficient
+        '''
+        for filename in self._filenames:
+            with tf.gfile.GFile(filename, "r") as f:
+                # refactor to read line by line
+                for docline in f.readlines():
+                    # url \t doctext
+                    doc = docline.split("\t", 1)
+                    docid = doc[0]
+                    doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc[1]), language='german')
+
+                    docdict[docid] = doc_tokens
+        '''
+        retrieve queries for documents (urls)
+        '''
+        nIns = 0
+        for i in range(0, Bing_url_size - 1):
+            # doc
+            # check key both for docs and labels
+            # Note: some times labels are missing :/
+            if dts[i] in docdict.keys():
+                if lbl[i] in qid_title_dict.keys():
+                    nIns += 1
+
+        dataset, labels = self.make_arrays(nIns, self.get_vocab_size())
+        cnt = 0
+        j = 0  # dataset idx
+        for i in range(0, Bing_url_size - 1):
+            # doc
+            # check key both for docs and labels
+            # Note: some times labels are missing :/
+            if dts[i] in docdict.keys():
+                if lbl[i] in qid_title_dict.keys():
+                    dataset[j] = docdict[dts[i]]
+                else:
+                    continue
+            else:
+                cnt += 1
+                continue
+
+            # query - label
+            label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
+            labels[j] = self.get_binary_vector(label_tokens)
+            j += 1
+        print("number of docs not in archive: {}".format(cnt))
+
+        print('Full dataset tensor:', dataset.shape, labels.shape)
+        # print('Mean:', np.mean(dataset))
+        # print('Standard deviation:', np.std(dataset))
+        return dataset, labels
+
 
     def _build_dict_from_a_set_of_files(self, filenames):
         '''

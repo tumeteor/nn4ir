@@ -28,7 +28,7 @@ class NN(object):
         self.input_vector_size = self.d_loader.d_handler.get_vocab_size()
         self.output_vector_size = self.d_loader.d_handler.get_vocab_size()
         self.train_dataset, self.train_labels, self.valid_dataset, \
-        self.valid_labels, self.test_dataset, self.test_labels = self.d_loader.get_ttv()
+        self.valid_labels, self.test_dataset, self.test_labels = self.d_loader.get_ttv(pretrained=True)
 
     def simple_NN_w_embedding(self):
         logger.info("creating the computational graph...")
@@ -86,22 +86,9 @@ class NN(object):
                 embedding_placeholder = tf.placeholder(tf.float32, [embed_vocab_size, NNConfig.embedding_dim])
                 embedding_init = W.assign(embedding_placeholder)
 
-
-                train_embed = tf.expand_dims(tf.nn.embedding_lookup(W, tf_train_dataset), -1)
-                print(train_embed.shape)
-                valid_embed = tf.expand_dims(tf.nn.embedding_lookup(W, tf_valid_dataset), -1)
-                test_embed = tf.expand_dims(tf.nn.embedding_lookup(W, tf_test_dataset), -1)
-
-                # Look up embeddings for inputs.
-                # train_embeddings = tf.Variable(
-                #   tf.random_uniform([self.input_vector_size, NNConfig.embedding_size], -1.0, 1.0))
-                # train_embed = tf.nn.embedding_lookup(train_embeddings, tf_train_dataset)
-
-                # valid_embeddings = tf.Variable(
-                #    tf.random_uniform([self.input_vector_size, NNConfig.embedding_size], -1.0, 1.0))
-                # valid_embed = tf.nn.embedding_lookup(train_embeddings, tf_valid_dataset)
-
-
+                train_embed = tf.nn.embedding_lookup(W, tf_train_dataset)
+                valid_embed = tf.nn.embedding_lookup(W, tf_valid_dataset)
+                test_embed = tf.nn.embedding_lookup(W, tf_test_dataset)
 
                 # Variables.
                 def init_weights(shape):
