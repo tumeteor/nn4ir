@@ -47,7 +47,7 @@ class TextDataHandler:
 
     _filenames = None
 
-    def __init__(self, all_doc_path, save_dir):
+    def __init__(self, all_doc_path, save_dir, pretrained=False):
         logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                             datefmt='%d.%m.%Y %I:%M:%S %p', level=logging.INFO)
         self.log = logging.getLogger("Data Processing")
@@ -55,12 +55,14 @@ class TextDataHandler:
         Utilities.create_file_dir(save_dir)
         # base_name = os.path.basename(os.path.normpath(all_doc_path))
         # word_to_id
-        word_to_id_pickle = os.path.join(save_dir, 'word_to_id.pkl')
-        self._word_to_id = self._maybe_pickling(word_to_id_pickle, self._build_dict_from_a_set_of_files, self._filenames)
+        if not pretrained:
+            word_to_id_pickle = os.path.join(save_dir, 'word_to_id.pkl')
+            self._word_to_id = self._maybe_pickling(word_to_id_pickle, self._build_dict_from_a_set_of_files, self._filenames)
+            # id_to_word
+            id_to_word_pickle = os.path.join(save_dir, 'id_to_word.pkl')
+            self._id_to_word = self._maybe_pickling(id_to_word_pickle, self._build_reverse_dict, self._word_to_id)
 
-        # id_to_word
-        id_to_word_pickle = os.path.join(save_dir, 'id_to_word.pkl')
-        self._id_to_word = self._maybe_pickling(id_to_word_pickle, self._build_reverse_dict, self._word_to_id)
+
 
     def _maybe_pickling(self, pickle_name, func, *func_param):
         if os.path.exists(pickle_name) and not self._force_read_input:

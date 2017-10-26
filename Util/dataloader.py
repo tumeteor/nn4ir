@@ -9,13 +9,16 @@ from Util.configs import DataConfig
 
 
 class DataLoader(object):
-    def __init__(self):
+    pretrained = False
+    def __init__(self, pretrained=False):
         logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                             datefmt='%d.%m.%Y %I:%M:%S %p', level=logging.INFO)
         self.log = logging.getLogger("Data Loader")
         self._d_handler = TextDataHandler(DataConfig.all_doc_path, DataConfig.save_dir_data)
-        self._d_handler.truncate_vocab(DataConfig.vocab_size)
+        if pretrained: self._d_handler.truncate_vocab(DataConfig.vocab_size)
         self._r_datautil = Retrieval_Data_Util(DataConfig.run_path, DataConfig.qrel_path, DataConfig.qtitle_path)
+
+        self.pretrained = pretrained
 
     @property
     def d_handler(self):
@@ -42,21 +45,21 @@ class DataLoader(object):
         print('Testing:', test_dataset.shape, test_labels.shape)
         return train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels
 
-    def prepare_data(self, pretrained=False):
+    def prepare_data(self):
         '''
         Prepare training data for NN
         :return:
         '''
         dts, lbl = self._r_datautil.get_pseudo_rel_qd_Bing(top_k=100)
-        if pretrained:
+        if self.pretrained:
             return self._d_handler.prepare_data_for_pretrained_embed(dts=dts, lbl=lbl,
                                                 qid_title_dict=self._r_datautil.qid_title_dict)
 
         return self._d_handler.prepare_data(dts=dts, lbl=lbl,
                                             qid_title_dict=self._r_datautil.qid_title_dict)
 
-    def get_ttv(self, pretrained=False):
-        pickle_file = os.path.join(DataConfig.save_dir_data, 'robust_txt_vec.pkl') if pretrained else \
+    def get_ttv(self):
+        pickle_file = os.path.join(DataConfig.save_dir_data, 'robust_txt_vec.pkl') if self.pretrained else \
             os.path.join(DataConfig.save_dir_data, 'robust_binary_vec.pkl')
         if os.path.exists(pickle_file):
             print('%s already present - Skipping pickling.' % pickle_file)
@@ -75,7 +78,7 @@ class DataLoader(object):
                 print('Test set', test_dataset.shape, test_labels.shape)
 
         else:
-            dataset, labels = self.prepare_data(pretrained=pretrained)
+            dataset, labels = self.prepare_data()
             train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels = \
                 self.create_datasets(dataset, labels, DataConfig.train_ratio, DataConfig.valid_ratio,
                                      DataConfig.test_ratio)
