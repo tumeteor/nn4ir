@@ -58,19 +58,17 @@ class NN(object):
                     global_step = tf.Variable(0)
 
                 def loadGloVe(glove_file_path):
+
+                    from gensim.models.keyedvectors import KeyedVectors
+                    model = KeyedVectors.load('glove_file_path')
+
                     vocab = []
                     embd = []
-                    f = open(glove_file_path, 'r')
-                    csv_reader = csv.reader(f, delimiter='\t')
-                    for row in csv_reader:
-                        word_id = self.d_loader.d_handler.get_id_of_word(row[1])
-                        if word_id != 0:
-                            vocab.append(word_id)
-                        else:
-                            continue
-                        embd.append(row[2])
-                    print('Loaded GloVe!')
-                    file.close()
+
+                    for word in self.d_loader.d_handler.get_vocab():
+                        vocab.append(word)
+                        embd.append(model[word])
+
                     return vocab, embd
 
                 '''
