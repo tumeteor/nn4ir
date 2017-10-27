@@ -24,7 +24,7 @@ class DataLoader(object):
             '''
                    Load pretrained embeddings
                    '''
-            self.vocab, self.embd = self.loadEmbedding(DataConfig.glove_file_path)
+            self.pretrain_vocab, self.embd = self.loadEmbedding(DataConfig.glove_file_path)
 
     @property
     def d_handler(self):
@@ -58,8 +58,7 @@ class DataLoader(object):
         '''
         dts, lbl = self._r_datautil.get_pseudo_rel_qd_Bing(top_k=100)
         if self.pretrained:
-            return self._d_handler.prepare_data_for_pretrained_embed(dts=dts, lbl=lbl,
-                                                qid_title_dict=self._r_datautil.qid_title_dict, length_max=DataConfig.max_doc_size, pretrain_vocab=self.vocab)
+            return self._d_handler.prepare_data_with_ids_from_pretrain(dts,lbl,qid_title_dict=self._r_datautil.qid_title_dict,pretrain_vocab=self.pretrain_vocab)
 
         return self._d_handler.prepare_data(dts=dts, lbl=lbl,
                                             qid_title_dict=self._r_datautil.qid_title_dict)

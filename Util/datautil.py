@@ -12,6 +12,7 @@ import tensorflow as tf
 import six.moves.cPickle as pickle
 import logging
 from surt import surt
+from Util.configs import DataConfig
 
 import csv
 
@@ -196,7 +197,69 @@ class TextDataHandler:
         # print('Standard deviation:', np.std(dataset))
         return dataset, labels
 
-    def prepare_data_for_pretrained_embed(self, dts, lbl, qid_title_dict, length_max, pretrain_vocab):
+
+    def prepare_data_with_ids_from_pretrain(self, dts, lbl, qid_title_dict, pretrain_vocab):
+        from tensorflow.contrib import learn
+        vocab_processor = learn.preprocessing.VocabularyProcessor(DataConfig.max_doc_size)
+        # fit the vocab from glove
+        pretrain = vocab_processor.fit(pretrain_vocab)
+
+        Bing_url_size = len(dts)
+        if Bing_url_size != len(lbl):
+            raise 'there is problem in the data...'
+        docdict = {}
+
+        '''
+        Retrieve documents from files
+        TODO: not so efficient
+        '''
+        for filename in self._filenames:
+            with tf.gfile.GFile(filename, "r") as f:
+                # refactor to read line by line
+                for docline in f.readlines():
+                    # url \t doctext
+                    doc = docline.split("\t", 1)
+                    docid = doc[0]
+                    docdict[docid] = vocab_processor.transform(doc[1])
+        '''
+        retrieve queries for documents (urls)
+        '''
+        nIns = 0
+        for i in range(0, Bing_url_size - 1):
+            # doc
+            # check key both for docs and labels
+            # Note: some times labels are missing :/
+            if dts[i] in docdict.keys():
+                if lbl[i] in qid_title_dict.keys():
+                    nIns += 1
+
+        dataset, labels = self.make_arrays(nIns, self.get_vocab_size())
+        cnt = 0
+        j = 0  # dataset idx
+        for i in range(0, Bing_url_size - 1):
+            # doc
+            # check key both for docs and labels
+            # Note: some times labels are missing :/
+            if dts[i] in docdict.keys():
+                if lbl[i] in qid_title_dict.keys():
+                    dataset[j] = docdict[dts[i]]
+                else:
+                    continue
+            else:
+                cnt += 1
+                continue
+
+            # query - label
+            labels[j] = vocab_processor.transform(qid_title_dict[lbl[i]])
+            j += 1
+        print("number of docs not in archive: {}".format(cnt))
+
+        print('Full dataset tensor:', dataset.shape, labels.shape)
+        # print('Mean:', np.mean(dataset))
+        # print('Standard deviation:', np.std(dataset))
+        return dataset, labels
+
+    def prepare_data_for_pretrained_embed(self, dts, lbl, qid_title_dict, length_max):
         Bing_url_size = len(dts)
         if Bing_url_size != len(lbl):
             raise 'there is problem in the data...'
@@ -214,12 +277,8 @@ class TextDataHandler:
                     doc = docline.split("\t", 1)
                     docid = doc[0]
                     doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc[1]), language='german')
-                    filtered = []
-                    for token in doc_tokens:
-                        if token in pretrain_vocab:
-                            filtered.append(token)
-                        else: continue
-                    data_wordIds_vec = self.word_list_to_id_list(filtered)
+
+                    data_wordIds_vec = self.word_list_to_id_list(doc_tokens)
                     docdict[docid] = data_wordIds_vec
         '''
         retrieve queries for documents (urls)
@@ -356,7 +415,7 @@ class TextDataHandler:
 
     def get_vocab(self):
         if not self._words:
-            self._words = set(self._word_to_id)
+            self._words = list(self._word_to_id)
         return self._words
 
     def get_one_hot_vector(self, wordIds_vec):

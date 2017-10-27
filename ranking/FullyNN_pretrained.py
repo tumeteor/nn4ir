@@ -55,7 +55,7 @@ class NN(object):
                     global_step = tf.Variable(0)
 
 
-                embed_vocab_size = len(self.d_loader.vocab)
+                embed_vocab_size = len(self.d_loader.pretrain_vocab)
                 embedding_dim = len(self.d_loader.embd[0])
                 embedding = np.asarray(self.d_loader.embd)
 
