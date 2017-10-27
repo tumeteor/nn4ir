@@ -53,7 +53,7 @@ class DataLoader(object):
         dts, lbl = self._r_datautil.get_pseudo_rel_qd_Bing(top_k=100)
         if self.pretrained:
             return self._d_handler.prepare_data_for_pretrained_embed(dts=dts, lbl=lbl,
-                                                qid_title_dict=self._r_datautil.qid_title_dict, length_max=DataConfig.max_doc_size)
+                                                qid_title_dict=self._r_datautil.qid_title_dict)
 
         return self._d_handler.prepare_data(dts=dts, lbl=lbl,
                                             qid_title_dict=self._r_datautil.qid_title_dict)
