@@ -248,7 +248,6 @@ class TextDataHandler:
             label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
             labels.append(label_tokens)
 
-        print('Full dataset tensor:', dataset.shape, labels.shape)
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
         return dataset, labels

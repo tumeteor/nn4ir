@@ -1,7 +1,7 @@
 import six.moves.cPickle as pickle
 import sys
 import os
-
+import numpy as np
 sys.path.insert(0, os.path.abspath('..'))
 import logging
 from Util.datautil import Retrieval_Data_Util, TextDataHandler, Utilities
@@ -63,7 +63,7 @@ class DataLoader(object):
             vocab_processor = learn.preprocessing.VocabularyProcessor(DataConfig.max_doc_size)
             # fit the vocab from glove
             pretrain = vocab_processor.fit(self.pretrain_vocab)
-            return vocab_processor.transform(dataset), vocab_processor.transform(labels)
+            return np.array(list(vocab_processor.transform(dataset))), np.array(list(vocab_processor.transform(labels)))
 
 
         return self._d_handler.prepare_data(dts=dts, lbl=lbl,
