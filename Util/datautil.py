@@ -215,7 +215,8 @@ class TextDataHandler:
                     docid = doc[0]
                     doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc[1]), language='german')
 
-                    docdict[docid] = doc_tokens
+                    data_wordIds_vec = self.word_list_to_id_list(doc_tokens)
+                    docdict[docid] = data_wordIds_vec
         '''
         retrieve queries for documents (urls)
         '''
@@ -247,7 +248,8 @@ class TextDataHandler:
 
             # query - label
             label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
-            labels.append(label_tokens)
+            label_wordIds_vec = self.word_list_to_id_list(label_tokens)
+            labels.append(label_wordIds_vec)
             j += 1
         print("number of docs not in archive: {}".format(cnt))
 
