@@ -220,7 +220,7 @@ class TextDataHandler:
                     # url \t doctext
                     doc = docline.split("\t", 1)
                     docid = doc[0]
-                    docdict[docid] = vocab_processor.transform(doc[1])
+                    docdict[docid] = vocab_processor.transform(nltk.word_tokenize(doc[1],language='german'))
         '''
         retrieve queries for documents (urls)
         '''
@@ -250,7 +250,7 @@ class TextDataHandler:
                 continue
 
             # query - label
-            labels[j] = vocab_processor.transform(qid_title_dict[lbl[i]])
+            labels[j] = vocab_processor.transform(nltk.word_tokenize(qid_title_dict[lbl[i]], language='german'))
             j += 1
         print("number of docs not in archive: {}".format(cnt))
 
