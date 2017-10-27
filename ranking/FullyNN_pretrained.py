@@ -134,8 +134,8 @@ class NN(object):
                 test_prediction = tf.nn.softmax(model(test_embed, w_h, b_h, w_o, b_o, False))
 
                 with tf.name_scope('accuracy'):
-                    pre = tf.placeholder("float", shape=[None, self.output_vector_size])
-                    lbl = tf.placeholder("float", shape=[None, self.output_vector_size])
+                    pre = tf.placeholder("float", shape=[None, DataConfig.max_doc_size])
+                    lbl = tf.placeholder("float", shape=[None, DataConfig.max_doc_size])
                     accuracy = tf.reduce_mean(
                         tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
 
