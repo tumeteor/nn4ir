@@ -54,91 +54,23 @@ class NN(object):
                 if NNConfig.learning_rate_decay:
                     global_step = tf.Variable(0)
 
-                def loadEmbedding(embd_file_path):
 
-                    from gensim.models.keyedvectors import KeyedVectors
-                    model = KeyedVectors.load(embd_file_path)
+                embed_vocab_size = len(self.d_loader.vocab)
+                embedding_dim = len(self.d_loader.embd[0])
+                embedding = np.asarray(self.d_loader.embd)
 
-                    vocab = []
-                    embd = []
-                    for word in self.d_loader.d_handler.get_vocab():
-                        if word in model:
-                            embd.append(model[word])
-                            vocab.append(self.d_loader.d_handler.get_id_of_word(word))
+                W = tf.Variable(tf.constant(0.0, shape=[embed_vocab_size, embedding_dim]),
+                                trainable=False, name="W")
 
-
-                    return vocab, embd
-
-
-                def embed_tensor(string_tensor, vocab, only_in_train, pretrained_embs, trainable=True):
-                    """
-                    Convert List of strings into list of indices then into 300d vectors
-                    """
-
-                    # Set up tensorflow look up from string word to unique integer
-                    vocab_lookup = tf.contrib.lookup.index_table_from_tensor(
-                        mapping=tf.constant(vocab),
-                        default_value=len(vocab))
-                    string_tensor = vocab_lookup.lookup(string_tensor)
-
-                    # define the word embedding
-                    pretrained_embs = tf.get_variable(
-                        name="embs_pretrained",
-                        initializer=tf.constant_initializer(np.asarray(pretrained_embs), dtype=tf.float32),
-                        trainable=trainable)
-                    train_embeddings = tf.get_variable(
-                        name="embs_only_in_train",
-                        shape=[len(only_in_train), len(pretrained_embs)],
-                        initializer=tf.random_uniform_initializer(-0.04, 0.04),
-                        trainable=trainable)
-                    unk_embedding = tf.get_variable(
-                        name="unk_embedding",
-                        shape=[1, len(pretrained_embs)],
-                        initializer=tf.random_uniform_initializer(-0.04, 0.04),
-                        trainable=False)
-
-                    embeddings = tf.concat([pretrained_embs, train_embeddings, unk_embedding], axis=0)
-
-                    return tf.nn.embedding_lookup(embeddings, string_tensor)
-
-
-                '''
-                Load pretrained embeddings
-                '''
-                # vocab, embd = loadEmbedding(DataConfig.glove_file_path)
-                # embed_vocab_size = len(vocab)
-                # embedding_dim = len(embd[0])
-                # embedding = np.asarray(embd)
-                #
-                # W = tf.Variable(tf.constant(0.0, shape=[embed_vocab_size, embedding_dim]),
-                #                 trainable=False, name="W")
-
-
-                pretrained_vocab, pretrained_embs = loadEmbedding(DataConfig.glove_file_path)
-                # ordered lists of vocab and corresponding (by index) 300d vector
-                train_vocab = self.d_loader.d_handler.get_vocab()
-                only_in_train = set(train_vocab) - set(pretrained_vocab)
-                vocab = set(pretrained_vocab) + only_in_train
-                embedding_dim = len(pretrained_embs)
-                #
-                # embedding_placeholder = tf.placeholder(tf.float32, [embed_vocab_size, NNConfig.embedding_dim])
-                # embedding_init = W.assign(embedding_placeholder)
+                embedding_placeholder = tf.placeholder(tf.float32, [embed_vocab_size, NNConfig.embedding_dim])
+                embedding_init = W.assign(embedding_placeholder)
 
                 # Reduce along dimension 1 (`n_input`) to get a single vector (row)
                 # per input example. It's fairly typical to do this for bag-of-words type problems.
 
-                train_embed = tf.reduce_sum(embed_tensor(string_tensor=tf_train_dataset,
-                                                         vocab=vocab,
-                                                         only_in_train=only_in_train,
-                                                         pretrained_embs=pretrained_embs), [1])
-                valid_embed = tf.reduce_sum(embed_tensor(string_tensor=tf_valid_dataset,
-                                                         vocab=vocab,
-                                                         only_in_train=only_in_train,
-                                                         pretrained_embs=pretrained_embs), [1])
-                test_embed = tf.reduce_sum(embed_tensor(string_tensor=tf_test_dataset,
-                                                        vocab=vocab,
-                                                        only_in_train=only_in_train,
-                                                        pretrained_embs=pretrained_embs), [1])
+                train_embed = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_train_dataset), [1])
+                valid_embed = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_valid_dataset), [1])
+                test_embed = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_test_dataset), [1])
 
                 # Variables.
                 def init_weights(shape):
@@ -194,7 +126,7 @@ class NN(object):
             session.run(tf.global_variables_initializer(), feed_dict={tf_valid_dataset_init: self.valid_dataset,
                                                                       tf_test_dataset_init: self.test_dataset})
             # After creating a session and initialize global variables, run the embedding_init operation by feeding in the 2-D array embedding.
-            # session.run(embedding_init, feed_dict={embedding_placeholder: embedding})
+            session.run(embedding_init, feed_dict={embedding_placeholder: embedding})
             logger.info('Initialized')
             for step in range(NNConfig.num_steps):
                 offset = (step * NNConfig.batch_size) % (self.train_labels.shape[0] - NNConfig.batch_size)
