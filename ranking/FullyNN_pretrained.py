@@ -85,9 +85,12 @@ class NN(object):
                 embedding_placeholder = tf.placeholder(tf.float32, [embed_vocab_size, NNConfig.embedding_dim])
                 embedding_init = W.assign(embedding_placeholder)
 
-                train_embed = tf.nn.embedding_lookup(W, tf_train_dataset)
-                valid_embed = tf.nn.embedding_lookup(W, tf_valid_dataset)
-                test_embed = tf.nn.embedding_lookup(W, tf_test_dataset)
+                # Reduce along dimension 1 (`n_input`) to get a single vector (row)
+                # per input example.
+
+                train_embed = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_train_dataset), [1])
+                valid_embed = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_valid_dataset), [1])
+                test_embed = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_test_dataset), [1])
 
                 # Variables.
                 def init_weights(shape):
