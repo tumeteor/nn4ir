@@ -69,14 +69,11 @@ class NN(object):
 
                     return vocab, embd
 
-                def embed_tensor(string_tensor, pretrained_vocab, pretrained_embs, trainable=True):
+
+                def embed_tensor(string_tensor, vocab, only_in_train, pretrained_embs, trainable=True):
                     """
                     Convert List of strings into list of indices then into 300d vectors
                     """
-                    # ordered lists of vocab and corresponding (by index) 300d vector
-                    train_vocab = self.d_loader.d_handler.get_vocab()
-                    only_in_train = set(train_vocab) - set(pretrained_vocab)
-                    vocab = pretrained_vocab + only_in_train
 
                     # Set up tensorflow look up from string word to unique integer
                     vocab_lookup = tf.contrib.lookup.index_table_from_tensor(
@@ -118,6 +115,10 @@ class NN(object):
 
 
                 pretrained_vocab, pretrained_embs = loadEmbedding(DataConfig.glove_file_path)
+                # ordered lists of vocab and corresponding (by index) 300d vector
+                train_vocab = self.d_loader.d_handler.get_vocab()
+                only_in_train = set(train_vocab) - set(pretrained_vocab)
+                vocab = set(pretrained_vocab) + only_in_train
                 #
                 # embedding_placeholder = tf.placeholder(tf.float32, [embed_vocab_size, NNConfig.embedding_dim])
                 # embedding_init = W.assign(embedding_placeholder)
@@ -126,14 +127,17 @@ class NN(object):
                 # per input example. It's fairly typical to do this for bag-of-words type problems.
 
                 train_embed = tf.reduce_sum(embed_tensor(string_tensor=tf_train_dataset,
-                                                         pretrained_vocab=pretrained_vocab,
+                                                         vocab=vocab,
+                                                         only_in_train=only_in_train,
                                                          pretrained_embs=pretrained_embs), [1])
                 valid_embed = tf.reduce_sum(embed_tensor(string_tensor=tf_valid_dataset,
-                                                         pretrained_vocab=pretrained_vocab,
+                                                         vocab=vocab,
+                                                         only_in_train=only_in_train,
                                                          pretrained_embs=pretrained_embs), [1])
                 test_embed = tf.reduce_sum(embed_tensor(string_tensor=tf_test_dataset,
-                                                         pretrained_vocab=pretrained_vocab,
-                                                         pretrained_embs=pretrained_embs), [1])
+                                                        vocab=vocab,
+                                                        only_in_train=only_in_train,
+                                                        pretrained_embs=pretrained_embs), [1])
 
                 # Variables.
                 def init_weights(shape):
