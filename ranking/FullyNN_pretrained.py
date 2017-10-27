@@ -10,7 +10,6 @@ import csv
 from Util.dataloader import DataLoader
 from Util.configs import NNConfig, DataConfig
 
-
 import logging
 logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
 fileHandler = logging.FileHandler("{0}/{1}.log".format("./", "FullyNN_pretrained"))
@@ -37,7 +36,7 @@ class NN(object):
         with graph.as_default():
             with tf.device("/cpu:0"):
                 # Input data
-                tf_train_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, DataConfig.max_doc_size))
+                tf_train_dataset = tf.placeholder(tf.int32, shape=(self.train_dataset.shape))
                 tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
 
                 # Do not load data to constant!
@@ -98,7 +97,7 @@ class NN(object):
                 def init_biases(shape):
                     return tf.Variable(tf.zeros(shape))
 
-                w_h = init_weights([self.input_vector_size, NNConfig.num_hidden_nodes])
+                w_h = init_weights([embedding_dim, NNConfig.num_hidden_nodes])
                 b_h = init_biases([NNConfig.num_hidden_nodes])
 
                 w_o = init_weights([NNConfig.num_hidden_nodes, self.output_vector_size])
