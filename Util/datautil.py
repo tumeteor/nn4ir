@@ -247,7 +247,6 @@ class TextDataHandler:
             # query - label
             label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
             labels.append(label_tokens)
-        print("number of docs not in archive: {}".format(cnt))
 
         print('Full dataset tensor:', dataset.shape, labels.shape)
         # print('Mean:', np.mean(dataset))
