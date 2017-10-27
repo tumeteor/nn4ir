@@ -12,7 +12,6 @@ import tensorflow as tf
 import six.moves.cPickle as pickle
 import logging
 from surt import surt
-from Util.configs import DataConfig
 
 import csv
 
@@ -198,11 +197,7 @@ class TextDataHandler:
         return dataset, labels
 
 
-    def prepare_data_with_ids_from_pretrain(self, dts, lbl, qid_title_dict, pretrain_vocab):
-        from tensorflow.contrib import learn
-        vocab_processor = learn.preprocessing.VocabularyProcessor(DataConfig.max_doc_size)
-        # fit the vocab from glove
-        pretrain = vocab_processor.fit(pretrain_vocab)
+    def prepare_data_for_pretrained(self, dts, lbl, qid_title_dict):
 
         Bing_url_size = len(dts)
         if Bing_url_size != len(lbl):
@@ -220,7 +215,9 @@ class TextDataHandler:
                     # url \t doctext
                     doc = docline.split("\t", 1)
                     docid = doc[0]
-                    docdict[docid] = vocab_processor.transform(nltk.word_tokenize(doc[1],language='german'))
+                    doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc[1]), language='german')
+
+                    docdict[docid] = doc_tokens
         '''
         retrieve queries for documents (urls)
         '''
@@ -250,7 +247,8 @@ class TextDataHandler:
                 continue
 
             # query - label
-            labels[j] = vocab_processor.transform(nltk.word_tokenize(qid_title_dict[lbl[i]], language='german'))
+            label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
+            labels[j] = label_tokens
             j += 1
         print("number of docs not in archive: {}".format(cnt))
 
