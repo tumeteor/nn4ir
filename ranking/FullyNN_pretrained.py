@@ -119,6 +119,7 @@ class NN(object):
                 train_vocab = self.d_loader.d_handler.get_vocab()
                 only_in_train = set(train_vocab) - set(pretrained_vocab)
                 vocab = set(pretrained_vocab) + only_in_train
+                embedding_dim = len(pretrained_embs)
                 #
                 # embedding_placeholder = tf.placeholder(tf.float32, [embed_vocab_size, NNConfig.embedding_dim])
                 # embedding_init = W.assign(embedding_placeholder)
@@ -193,7 +194,7 @@ class NN(object):
             session.run(tf.global_variables_initializer(), feed_dict={tf_valid_dataset_init: self.valid_dataset,
                                                                       tf_test_dataset_init: self.test_dataset})
             # After creating a session and initialize global variables, run the embedding_init operation by feeding in the 2-D array embedding.
-            session.run(embedding_init, feed_dict={embedding_placeholder: embedding})
+            # session.run(embedding_init, feed_dict={embedding_placeholder: embedding})
             logger.info('Initialized')
             for step in range(NNConfig.num_steps):
                 offset = (step * NNConfig.batch_size) % (self.train_labels.shape[0] - NNConfig.batch_size)
