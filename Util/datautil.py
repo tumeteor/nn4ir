@@ -352,7 +352,7 @@ class TextDataHandler:
 
     def get_vocab(self):
         if not self._words:
-            self._words = list(self._word_to_id)
+            self._words = set(self._word_to_id)
         return self._words
 
     def get_one_hot_vector(self, wordIds_vec):
