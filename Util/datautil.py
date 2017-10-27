@@ -219,7 +219,7 @@ class TextDataHandler:
                         if token in pretrain_vocab:
                             filtered.append(token)
                         else: continue
-                    data_wordIds_vec = self.word_list_to_id_list(doc_tokens)
+                    data_wordIds_vec = self.word_list_to_id_list(filtered)
                     docdict[docid] = data_wordIds_vec
         '''
         retrieve queries for documents (urls)
