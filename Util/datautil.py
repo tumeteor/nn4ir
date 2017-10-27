@@ -258,7 +258,7 @@ class TextDataHandler:
 
     def padding(self, dataset):
         '''
-        For tensors
+        For tensors, pad with zeros
         :param dataset:
         :param length_max:
         :return:

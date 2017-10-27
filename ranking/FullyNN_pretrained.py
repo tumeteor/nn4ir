@@ -67,7 +67,7 @@ class NN(object):
                     for word in self.d_loader.d_handler.get_vocab():
                         if word in model:
                             embd.append(model[word])
-                            vocab.append(word)
+                            vocab.append(self.d_loader.d_handler.get_id_of_word(word))
 
 
                     return vocab, embd
