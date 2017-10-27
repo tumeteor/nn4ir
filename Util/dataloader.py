@@ -111,11 +111,9 @@ class DataLoader(object):
         from gensim.models.keyedvectors import KeyedVectors
         model = KeyedVectors.load(embd_file_path)
 
-        vocab = []
+        vocab = model.vocab
         embd = []
-        for word in self.d_handler.get_vocab():
-            if word in model:
-                embd.append(model[word])
-                vocab.append(self.d_handler.get_id_of_word(word))
+        for word in vocab:
+            embd.append(model[word])
 
         return vocab, embd
