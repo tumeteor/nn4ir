@@ -196,7 +196,7 @@ class TextDataHandler:
         # print('Standard deviation:', np.std(dataset))
         return dataset, labels
 
-    def prepare_data_for_pretrained_embed(self, dts, lbl, qid_title_dict):
+    def prepare_data_for_pretrained_embed(self, dts, lbl, qid_title_dict, length_max):
         Bing_url_size = len(dts)
         if Bing_url_size != len(lbl):
             raise 'there is problem in the data...'
@@ -256,9 +256,9 @@ class TextDataHandler:
         # print('Full dataset tensor:', dataset.shape, labels.shape)
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
-        return self.padding(dataset), self.padding(labels)
+        return self.padding(dataset, length_max), self.padding(labels, length_max)
 
-    def padding(self, dataset):
+    def padding(self, dataset, length_max):
         '''
         For tensors, pad with zeros
         :param dataset:
@@ -266,13 +266,15 @@ class TextDataHandler:
         :return:
         '''
         x_data = np.array(dataset)
+        # truncate long docs
+        x_data = [(x[0:length_max] if len(x) > length_max else x) for x in x_data]
 
         # Get lengths of each row of data
         lens = np.array([len(x_data[i]) for i in range(len(x_data))])
 
         # Mask of valid places in each row
-        mask = np.arange(lens.max()) < lens[:, None]
-        #mask = np.arange(length_max) < lens[:, None]
+        # mask = np.arange(lens.max()) < lens[:, None]
+        mask = np.arange(length_max) < lens[:, None]
 
         # Setup output array and put elements from data into masked positions
         padded = np.zeros(mask.shape)

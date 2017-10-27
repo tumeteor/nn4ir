@@ -15,7 +15,7 @@ class DataLoader(object):
                             datefmt='%d.%m.%Y %I:%M:%S %p', level=logging.INFO)
         self.log = logging.getLogger("Data Loader")
         self._d_handler = TextDataHandler(DataConfig.all_doc_path, DataConfig.save_dir_data)
-        if pretrained: self._d_handler.truncate_vocab(DataConfig.vocab_size)
+        if not pretrained: self._d_handler.truncate_vocab(DataConfig.vocab_size)
         self._r_datautil = Retrieval_Data_Util(DataConfig.run_path, DataConfig.qrel_path, DataConfig.qtitle_path)
 
         self.pretrained = pretrained
@@ -53,7 +53,7 @@ class DataLoader(object):
         dts, lbl = self._r_datautil.get_pseudo_rel_qd_Bing(top_k=100)
         if self.pretrained:
             return self._d_handler.prepare_data_for_pretrained_embed(dts=dts, lbl=lbl,
-                                                qid_title_dict=self._r_datautil.qid_title_dict)
+                                                qid_title_dict=self._r_datautil.qid_title_dict, length_max=DataConfig.max_doc_size)
 
         return self._d_handler.prepare_data(dts=dts, lbl=lbl,
                                             qid_title_dict=self._r_datautil.qid_title_dict)

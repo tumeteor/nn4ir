@@ -36,7 +36,7 @@ class NN(object):
         with graph.as_default():
             with tf.device("/cpu:0"):
                 # Input data
-                tf_train_dataset = tf.placeholder(tf.int32, shape=(self.train_dataset.shape))
+                tf_train_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, DataConfig.max_doc_size))
                 tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
 
                 # Do not load data to constant!
@@ -86,7 +86,7 @@ class NN(object):
                 embedding_init = W.assign(embedding_placeholder)
 
                 # Reduce along dimension 1 (`n_input`) to get a single vector (row)
-                # per input example.
+                # per input example. It's fairly typical to do this for bag-of-words type problems.
 
                 train_embed = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_train_dataset), [1])
                 valid_embed = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_valid_dataset), [1])
