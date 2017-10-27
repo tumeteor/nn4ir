@@ -196,7 +196,7 @@ class TextDataHandler:
         # print('Standard deviation:', np.std(dataset))
         return dataset, labels
 
-    def prepare_data_for_pretrained_embed(self, dts, lbl, qid_title_dict):
+    def prepare_data_for_pretrained_embed(self, dts, lbl, qid_title_dict, length_max):
         Bing_url_size = len(dts)
         if Bing_url_size != len(lbl):
             raise 'there is problem in the data...'
@@ -247,15 +247,35 @@ class TextDataHandler:
 
             # query - label
             label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
-            labels.append(self.get_binary_vector(label_tokens))
+            labels.append(label_tokens)
             j += 1
         print("number of docs not in archive: {}".format(cnt))
 
-        print('Full dataset tensor:', dataset.shape, labels.shape)
+        # print('Full dataset tensor:', dataset.shape, labels.shape)
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
-        return dataset, labels
+        return self.padding(dataset, length_max), self.padding(labels, length_max)
 
+    def padding(self, dataset, length_max):
+        '''
+        For tensors
+        :param dataset:
+        :param length_max:
+        :return:
+        '''
+        x_data = np.array(dataset)
+
+        # Get lengths of each row of data
+        lens = np.array([len(x_data[i]) for i in range(len(x_data))])
+
+        # Mask of valid places in each row
+        #mask = np.arange(lens.max()) < lens[:, None]
+        mask = np.arange(length_max) < lens[:, None]
+
+        # Setup output array and put elements from data into masked positions
+        padded = np.zeros(mask.shape)
+        padded[mask] = np.hstack((x_data[:]))
+        return padded
 
     def _build_dict_from_a_set_of_files(self, filenames):
         '''

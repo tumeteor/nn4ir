@@ -5,9 +5,10 @@ import sys
 import os
 import math
 sys.path.insert(0, os.path.abspath('..'))
+from tensorflow.contrib import learn
 
 from Util.dataloader import DataLoader
-from Util.configs import NNConfig
+from Util.configs import NNConfig, DataConfig
 
 
 import logging
@@ -102,9 +103,13 @@ class NN(object):
                 valid_prediction = tf.nn.softmax(model(tf_valid_dataset, w_h, b_h, w_o, b_o, False))
                 test_prediction = tf.nn.softmax(model(tf_test_dataset, w_h, b_h, w_o, b_o, False))
 
+                '''
+                run accuracy scope
+                '''
                 with tf.name_scope('accuracy'):
                     pre = tf.placeholder("float", shape=[None, self.output_vector_size])
                     lbl = tf.placeholder("float", shape=[None, self.output_vector_size])
+                    # compute the mean of all predictions
                     accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
 
         logger.info('running the session...')
@@ -279,6 +284,37 @@ class NN(object):
                 if NNConfig.learning_rate_decay:
                     global_step = tf.Variable(0)
 
+
+                def loadGloVe(glove_file_path):
+                    vocab = []
+                    embd = []
+                    file = open(glove_file_path, 'r')
+                    for line in file.readlines():
+                        row = line.strip().split(' ')
+                        vocab.append(row[0])
+                        embd.append(row[1:])
+                    print('Loaded GloVe!')
+                    file.close()
+                    return vocab, embd
+                '''
+                Load pretrained embeddings
+                '''
+                vocab, embd = loadGloVe(DataConfig.glove_file_path)
+                embed_vocab_size = len(vocab)
+                embedding_dim = len(embd[0])
+                embedding = np.asarray(embd)
+
+
+                W = tf.Variable(tf.constant(0.0, shape=[embed_vocab_size, embedding_dim]),
+                                trainable=False, name="W")
+
+                embedding_placeholder = tf.placeholder(tf.float32, [embed_vocab_size, NNConfig.embedding_dim])
+                embedding_init = W.assign(embedding_placeholder)
+
+                train_embed = tf.nn.embedding_lookup(W, tf_train_dataset)
+                valid_embed = tf.nn.embedding_lookup(W, tf_valid_dataset)
+                test_embed = tf.nn.embedding_lookup(W, tf_test_dataset)
+
                 # Look up embeddings for inputs.
                 #train_embeddings = tf.Variable(
                 #   tf.random_uniform([self.input_vector_size, NNConfig.embedding_size], -1.0, 1.0))
@@ -318,7 +354,7 @@ class NN(object):
                         return tf.matmul(h_lay_train, w_o) + b_o
 
 
-                logits = model(tf_train_dataset, w_h, b_h, w_o, b_o, True)
+                logits = model(train_embed, w_h, b_h, w_o, b_o, True)
                 loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
                 # tf.nn.sigmoid_cross_entropy_with_logits instead of tf.nn.softmax_cross_entropy_with_logits for multi-label case
                 if NNConfig.regularization:
@@ -333,8 +369,8 @@ class NN(object):
 
 
                 train_prediction = tf.nn.softmax(logits)
-                valid_prediction = tf.nn.softmax(model(tf_valid_dataset, w_h, b_h, w_o, b_o, False))
-                test_prediction = tf.nn.softmax(model(tf_test_dataset, w_h, b_h, w_o, b_o, False))
+                valid_prediction = tf.nn.softmax(model(valid_embed, w_h, b_h, w_o, b_o, False))
+                test_prediction = tf.nn.softmax(model(test_embed, w_h, b_h, w_o, b_o, False))
 
                 with tf.name_scope('accuracy'):
                     pre = tf.placeholder("float", shape=[None, self.output_vector_size])
@@ -345,6 +381,8 @@ class NN(object):
         with tf.Session(graph=graph,config=tf.ConfigProto(log_device_placement=True)) as session:
             session.run(tf.global_variables_initializer(), feed_dict={tf_valid_dataset_init: self.valid_dataset,
                                                                       tf_test_dataset_init: self.test_dataset})
+            # After creating a session and initialize global variables, run the embedding_init operation by feeding in the 2-D array embedding.
+            session.run(embedding_init, feed_dict={embedding_placeholder: embedding})
             logger.info('Initialized')
             for step in range(NNConfig.num_steps):
                 offset = (step * NNConfig.batch_size) % (self.train_labels.shape[0] - NNConfig.batch_size)

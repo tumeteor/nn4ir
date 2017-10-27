@@ -10,6 +10,7 @@ class DataConfig():
     train_ratio = .7
     valid_ratio = .15
     test_ratio = .15
+    max_doc_size = 2000
 
 class NNConfig():
     embedding_dim = 300

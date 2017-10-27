@@ -30,9 +30,16 @@ class NN:
                 '''
                 tf_train_dataset = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.input_vector_size))
                 tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
-                tf_valid_dataset = tf.constant(self.valid_dataset)
-                tf_test_dataset = tf.constant(self.test_dataset)
+                # Do not load data to constant!
+                # tf_valid_dataset = tf.constant(self.valid_dataset)
+                # tf_test_dataset = tf.constant(self.test_dataset)
 
+                # create a placeholder
+                tf_valid_dataset_init = tf.placeholder(tf.float32, shape=self.valid_dataset.shape)
+                tf_valid_dataset = tf.Variable(tf_valid_dataset_init)
+
+                tf_test_dataset_init = tf.placeholder(tf.float32, shape=self.test_dataset.shape)
+                tf_test_dataset = tf.Variable(tf_test_dataset_init)
 
                 if NNConfig.regularization:
                     beta_regu = tf.placeholder(tf.float32)
@@ -97,7 +104,9 @@ class NN:
             self.log.info("running the session..")
 
             with tf.Session(graph=graph, config=tf.ConfigProto(log_device_placement=True)) as session:
-                tf.initialize_all_variables().run()
+
+                session.run(tf.global_variables_initializer(), feed_dict={tf_valid_dataset_init: self.valid_dataset,
+                                                                          tf_test_dataset_init: self.test_dataset})
                 self.log.info("Initialized")
                 for step in range(NNConfig.num_steps):
                     offset = (step * NNConfig.batch_size) % (self.train_labels.shape[0] - NNConfig.batch_size)
@@ -111,6 +120,10 @@ class NN:
                     _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
                     if (step % NNConfig.summary_steps == 0):
                         self.log.info("Minibatch loss at step %d: %f" %(step, l))
+                        print("valid prediction shape: {}".format(tf.shape(valid_prediction)))
+                        print("valid label shape: {}".format(self.valid_labels.shape))
+                        print("test prediction shape: {}".format(tf.shape(test_prediction)))
+                        print("test label shape: {}".format(self.test_labels.shape))
                         self.log.info("Minibatch accuracy: %.3f%%" % session.run(accuracy, feed_dict={pre: predictions,
                                                                                                       lbl: self.valid_labels}))
                         # self.print_words(predictions, batch_labels)
@@ -118,10 +131,7 @@ class NN:
                                                                                  feed_dict={
                                                                                      pre: valid_prediction.eval(),
                                                                                      lbl: self.valid_labels}))
-                        print ("valid prediction shape: {}".format(tf.shape(valid_prediction)))
-                        print("valid label shape: {}".format(self.valid_labels.shape))
-                        print("test prediction shape: {}".format(tf.shape(test_prediction)))
-                        print("test label shape: {}".format(self.test_labels.shape))
+
                         self.log.info("Test accuracy: %.3%%" % session.run(accuracy, feed_dict={pre: test_prediction.eval(),
                                                                                                 lbl: self.test_labels}))
 
