@@ -215,9 +215,8 @@ class TextDataHandler:
                     # url \t doctext
                     doc = docline.split("\t", 1)
                     docid = doc[0]
-                    doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc[1]), language='german')
 
-                    docdict[docid] = doc_tokens
+                    docdict[docid] = TextDataHandler.clean_str(doc[1])
         '''
         retrieve queries for documents (urls)
         '''
@@ -245,8 +244,7 @@ class TextDataHandler:
                 continue
 
             # query - label
-            label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
-            labels.append(label_tokens)
+            labels.append(qid_title_dict[lbl[i]])
 
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
