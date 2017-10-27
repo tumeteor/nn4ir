@@ -58,7 +58,13 @@ class DataLoader(object):
         '''
         dts, lbl = self._r_datautil.get_pseudo_rel_qd_Bing(top_k=100)
         if self.pretrained:
-            return self._d_handler.prepare_data_with_ids_from_pretrain(dts,lbl,qid_title_dict=self._r_datautil.qid_title_dict,pretrain_vocab=self.pretrain_vocab)
+            dataset, labels = self._d_handler.prepare_data_with_ids_from_pretrain(dts,lbl,qid_title_dict=self._r_datautil.qid_title_dict,pretrain_vocab=self.pretrain_vocab)
+            from tensorflow.contrib import learn
+            vocab_processor = learn.preprocessing.VocabularyProcessor(DataConfig.max_doc_size)
+            # fit the vocab from glove
+            pretrain = vocab_processor.fit(self.pretrain_vocab)
+            return vocab_processor.transform(dataset), vocab_processor.transform(labels)
+
 
         return self._d_handler.prepare_data(dts=dts, lbl=lbl,
                                             qid_title_dict=self._r_datautil.qid_title_dict)
