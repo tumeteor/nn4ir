@@ -24,8 +24,6 @@ logger.addHandler(consoleHandler)
 class NN(object):
     def __init__(self):
         self.d_loader = DataLoader(pretrained=True)
-        self.input_vector_size = self.d_loader.d_handler.get_vocab_size()
-        self.output_vector_size = self.d_loader.d_handler.get_vocab_size()
         self.train_dataset, self.train_labels, self.valid_dataset, \
         self.valid_labels, self.test_dataset, self.test_labels = self.d_loader.get_ttv()
 
@@ -37,7 +35,7 @@ class NN(object):
             with tf.device("/cpu:0"):
                 # Input data
                 tf_train_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, DataConfig.max_doc_size))
-                tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
+                tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, DataConfig.max_doc_size))
 
                 # Do not load data to constant!
                 # tf_valid_dataset = tf.constant(self.valid_dataset)
@@ -103,8 +101,8 @@ class NN(object):
                 w_h = init_weights([embedding_dim, NNConfig.num_hidden_nodes])
                 b_h = init_biases([NNConfig.num_hidden_nodes])
 
-                w_o = init_weights([NNConfig.num_hidden_nodes, self.output_vector_size])
-                b_o = init_biases([self.output_vector_size])
+                w_o = init_weights([NNConfig.num_hidden_nodes, DataConfig.max_doc_size])
+                b_o = init_biases([DataConfig.max_doc_size])
 
                 # Training computation
                 def model(dataset, w_h, b_h, w_o, b_o, train):
