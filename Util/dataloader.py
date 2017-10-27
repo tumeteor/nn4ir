@@ -20,6 +20,12 @@ class DataLoader(object):
 
         self.pretrained = pretrained
 
+        if pretrained:
+            '''
+                   Load pretrained embeddings
+                   '''
+            self.vocab, self.embd = self.loadEmbedding(DataConfig.glove_file_path)
+
     @property
     def d_handler(self):
         return self._d_handler
@@ -52,8 +58,8 @@ class DataLoader(object):
         '''
         dts, lbl = self._r_datautil.get_pseudo_rel_qd_Bing(top_k=100)
         if self.pretrained:
-            return self._d_handler.ls(dts=dts, lbl=lbl,
-                                                qid_title_dict=self._r_datautil.qid_title_dict, length_max=DataConfig.max_doc_size)
+            return self._d_handler.prepare_data_for_pretrained_embed(dts=dts, lbl=lbl,
+                                                qid_title_dict=self._r_datautil.qid_title_dict, length_max=DataConfig.max_doc_size, pretrain_vocab=self.vocab)
 
         return self._d_handler.prepare_data(dts=dts, lbl=lbl,
                                             qid_title_dict=self._r_datautil.qid_title_dict)
@@ -100,3 +106,17 @@ class DataLoader(object):
             statinfo = os.stat(pickle_file)
             print('Compressed pickle size:', statinfo.st_size)
         return train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels
+
+    def loadEmbedding(self, embd_file_path):
+
+        from gensim.models.keyedvectors import KeyedVectors
+        model = KeyedVectors.load(embd_file_path)
+
+        vocab = []
+        embd = []
+        for word in self.d_handler.get_vocab():
+            if word in model:
+                embd.append(model[word])
+                vocab.append(self.d_handler.get_id_of_word(word))
+
+        return vocab, embd

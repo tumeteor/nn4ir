@@ -196,7 +196,7 @@ class TextDataHandler:
         # print('Standard deviation:', np.std(dataset))
         return dataset, labels
 
-    def prepare_data_for_pretrained_embed(self, dts, lbl, qid_title_dict, length_max):
+    def prepare_data_for_pretrained_embed(self, dts, lbl, qid_title_dict, length_max, pretrain_vocab):
         Bing_url_size = len(dts)
         if Bing_url_size != len(lbl):
             raise 'there is problem in the data...'
@@ -214,7 +214,11 @@ class TextDataHandler:
                     doc = docline.split("\t", 1)
                     docid = doc[0]
                     doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc[1]), language='german')
-
+                    filtered = []
+                    for token in doc_tokens:
+                        if token in pretrain_vocab:
+                            filtered.append(token)
+                        else: continue
                     data_wordIds_vec = self.word_list_to_id_list(doc_tokens)
                     docdict[docid] = data_wordIds_vec
         '''
