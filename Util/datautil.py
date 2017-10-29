@@ -248,7 +248,7 @@ class TextDataHandler:
 
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
-        return dataset, labels
+        return np.array(dataset, dtype=np.float32), np.array(labels, dtype=np.float32)
 
     def prepare_data_for_pretrained_with_old_vocab(self, dts, lbl, qid_title_dict, length_max):
         Bing_url_size = len(dts)
