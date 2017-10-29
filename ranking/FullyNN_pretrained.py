@@ -35,7 +35,7 @@ class NN(object):
             with tf.device("/cpu:0"):
                 # Input data
                 tf_train_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, DataConfig.max_doc_size))
-                tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, DataConfig.max_doc_size))
+                tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, 1))
 
                 # Do not load data to constant!
                 # tf_valid_dataset = tf.constant(self.valid_dataset)
