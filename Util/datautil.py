@@ -215,19 +215,18 @@ class TextDataHandler:
                     # url \t doctext
                     doc = docline.split("\t", 1)
                     docid = doc[0]
-
                     docdict[docid] = TextDataHandler.clean_str(doc[1])
         '''
         retrieve queries for documents (urls)
         '''
-        nIns = 0
-        for i in range(0, Bing_url_size - 1):
+        # nIns = 0
+        # for i in range(0, Bing_url_size - 1):
             # doc
             # check key both for docs and labels
             # Note: some times labels are missing :/
-            if dts[i] in docdict.keys():
-                if lbl[i] in qid_title_dict.keys():
-                    nIns += 1
+            # if dts[i] in docdict.keys():
+            #     if lbl[i] in qid_title_dict.keys():
+            #         nIns += 1
 
         dataset = list()
         labels = list()
@@ -244,13 +243,14 @@ class TextDataHandler:
                 continue
 
             # query - label
-            labels.append(qid_title_dict[lbl[i]])
+            # labels.append(qid_title_dict[lbl[i]])
+            labels.append(lbl[i])
 
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
         return dataset, labels
 
-    def prepare_data_for_pretrained_embed(self, dts, lbl, qid_title_dict, length_max):
+    def prepare_data_for_pretrained_with_old_vocab(self, dts, lbl, qid_title_dict, length_max):
         Bing_url_size = len(dts)
         if Bing_url_size != len(lbl):
             raise 'there is problem in the data...'
@@ -301,9 +301,10 @@ class TextDataHandler:
                 continue
 
             # query - label
-            label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
-            label_wordIds_vec = self.word_list_to_id_list(label_tokens)
-            labels.append(label_wordIds_vec)
+            #label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
+            #label_wordIds_vec = self.word_list_to_id_list(label_tokens)
+            #labels.append(label_wordIds_vec)
+
             j += 1
         print("number of docs not in archive: {}".format(cnt))
 
@@ -533,7 +534,7 @@ class Retrieval_Data_Util:
                 if int(row[1]) <= top_k:
                     # urls in Bing is not normalized yet
                     d.append(surt(row[4]))
-                    q.append(row[0])
+                    q.append(int(row[1])) # get Bing rank as label
             f.close()
         return d, q
 

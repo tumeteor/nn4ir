@@ -83,8 +83,8 @@ class NN(object):
                 w_h = init_weights([embedding_dim, NNConfig.num_hidden_nodes])
                 b_h = init_biases([NNConfig.num_hidden_nodes])
 
-                w_o = init_weights([NNConfig.num_hidden_nodes, DataConfig.max_doc_size])
-                b_o = init_biases([DataConfig.max_doc_size])
+                w_o = init_weights([NNConfig.num_hidden_nodes, 1])
+                b_o = init_biases([1])
 
                 # Training computation
                 def model(dataset, w_h, b_h, w_o, b_o, train):
@@ -139,6 +139,7 @@ class NN(object):
                 #   print(self.get_words(vec))
 
                 feed_dict = {tf_train_dataset: batch_data, tf_train_labels: batch_labels}
+                logger.info("prediction shape: {}".format(tf.shape(train_prediction)))
                 if NNConfig.regularization:
                     feed_dict[beta_regu] = NNConfig.beta_regu
                 _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
