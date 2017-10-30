@@ -76,13 +76,13 @@ class NN:
                     self.W = tf.Variable(
                         tf.random_uniform([self.input_vector_size, NNConfig.embedding_dim], -1.0, 1.0),
                         name="W")
-                    embedded_train = tf.nn.embedding_lookup(self.W, self.train_dataset)
+                    embedded_train = tf.nn.embedding_lookup(self.W, tf_train_dataset)
                     self.embedded_train_expanded = tf.expand_dims(embedded_train, -1)
 
-                    embedded_valid = tf.nn.embedding_lookup(self.W, self.valid_dataset)
+                    embedded_valid = tf.nn.embedding_lookup(self.W, tf_valid_dataset)
                     self.embedded_valid_expanded = tf.expand_dims(embedded_train, -1)
 
-                    embedded_test = tf.nn.embedding_lookup(self.W, self.test_dataset)
+                    embedded_test = tf.nn.embedding_lookup(self.W, tf_test_dataset)
                     self. embedded_train_expanded = tf.expand_dims(embedded_test, -1)
 
 
@@ -184,11 +184,11 @@ if __name__ == '__main__':
     nn = NN()
     try:
         if args.mode == "gpu":
-            nn.simpleNN(mode="/gpu:0")
-        else: nn.simpleNN()
-        nn.log.info("done..")
+            nn.simple_NN(mode="/gpu:0")
+        else: nn.simple_NN()
+        logger.info("done..")
     except Exception as e:
-        nn.log.exception(e)
+        logger.exception(e)
         raise
 
 
