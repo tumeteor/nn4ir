@@ -164,7 +164,7 @@ class TextDataHandler:
             # check key both for docs and labels
             # Note: some times labels are missing :/
             if dts[i] in docdict.keys():
-                if lbl[i] in qid_title_dict.keys():
+                if lbl[i][0] in qid_title_dict.keys():
                     nIns += 1
 
 
@@ -176,7 +176,7 @@ class TextDataHandler:
             # check key both for docs and labels
             # Note: some times labels are missing :/
             if dts[i] in docdict.keys():
-                if lbl[i] in qid_title_dict.keys():
+                if lbl[i][0] in qid_title_dict.keys():
                     dataset[j] = docdict[dts[i]]
                 else:
                     continue
@@ -185,9 +185,10 @@ class TextDataHandler:
                 continue
 
             # query - label
-            label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]],language='german')
-            label_wordIds_vec = self.word_list_to_id_list(label_tokens)
-            labels[j] = self.get_binary_vector(label_wordIds_vec)
+            #label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]],language='german')
+            #label_wordIds_vec = self.word_list_to_id_list(label_tokens)
+            #labels[j] = self.get_binary_vector(label_wordIds_vec)
+            labels.append(float(lbl[i][1]))
             j += 1
         print("number of docs not in archive: {}".format(cnt))
 
