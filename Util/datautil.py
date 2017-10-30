@@ -534,7 +534,7 @@ class Retrieval_Data_Util:
                 if int(row[1]) <= top_k:
                     # urls in Bing is not normalized yet
                     d.append(surt(row[4]))
-                    q.append(row[0],row[1]) # get Bing rank as label
+                    q.append([row[0],row[1]]) # get Bing rank as label
             f.close()
         return d, q
 
