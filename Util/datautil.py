@@ -129,7 +129,7 @@ class TextDataHandler:
     def make_arrays(self, nb_rows, vec_size):
         if nb_rows:
             dataset = np.ndarray((nb_rows, vec_size), dtype=np.float32)
-            labels = np.ndarray((nb_rows, vec_size), dtype=np.float32)
+            labels = np.ndarray((nb_rows), dtype=np.float32)
         else:
             dataset, labels = None, None
         return dataset, labels
@@ -188,7 +188,7 @@ class TextDataHandler:
             #label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]],language='german')
             #label_wordIds_vec = self.word_list_to_id_list(label_tokens)
             #labels[j] = self.get_binary_vector(label_wordIds_vec)
-            labels.append(float(lbl[i][1]))
+            labels[j] = float(lbl[i][1])
             j += 1
         print("number of docs not in archive: {}".format(cnt))
 
