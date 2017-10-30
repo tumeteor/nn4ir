@@ -125,7 +125,8 @@ class NN(object):
             for step in range(NNConfig.num_steps):
                 offset = (step * NNConfig.batch_size) % (self.train_labels.shape[0] - NNConfig.batch_size)
                 batch_data = self.train_dataset[offset:(offset + NNConfig.batch_size), :]
-                batch_labels = self.train_labels[offset:(offset + NNConfig.batch_size), :]
+                batch_labels = self.train_labels[offset:(offset + NNConfig.batch_size)]
+                batch_labels = batch_labels.reshape(len(batch_labels), 1)
 
                 # print('-' * 80)
                 # for vec in batch_labels:
