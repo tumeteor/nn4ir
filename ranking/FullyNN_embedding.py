@@ -80,7 +80,7 @@ class NN:
                     self.embedded_train_expanded = tf.reduce_sum(embedded_train, [1])
 
                     embedded_valid = tf.nn.embedding_lookup(self.W, tf_valid_dataset)
-                    self.embedded_valid_expanded = tf.reduce_sum(embedded_train, [1])
+                    self.embedded_valid_expanded = tf.reduce_sum(embedded_valid, [1])
 
                     embedded_test = tf.nn.embedding_lookup(self.W, tf_test_dataset)
                     self.embedded_test_expanded = tf.reduce_sum(embedded_test, [1])
@@ -97,7 +97,7 @@ class NN:
                         h_lay_train = tf.nn.relu(tf.matmul(dataset, w_h) + b_h)  # or tf.nn.sigmoid
                         return tf.matmul(h_lay_train, w_o) + b_o
 
-
+                logger.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_expanded)))
                 logits = model(self.embedded_train_expanded, w_h, b_h, w_o, b_o, True)
                 loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) /  \
                        (2 * tf.cast(tf.shape(tf_train_labels)[0], tf.float32))
