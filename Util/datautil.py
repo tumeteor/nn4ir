@@ -249,7 +249,7 @@ class TextDataHandler:
 
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
-        return dataset, labels
+        return dataset, labels.reshape(len(labels), 1)
 
     def prepare_data_for_pretrained_with_old_vocab(self, dts, lbl, qid_title_dict, length_max):
         Bing_url_size = len(dts)
@@ -275,14 +275,6 @@ class TextDataHandler:
         '''
         retrieve queries for documents (urls)
         '''
-        nIns = 0
-        for i in range(0, Bing_url_size - 1):
-            # doc
-            # check key both for docs and labels
-            # Note: some times labels are missing :/
-            if dts[i] in docdict.keys():
-                if lbl[i] in qid_title_dict.keys():
-                    nIns += 1
 
         dataset = list()
         labels = list()
@@ -293,7 +285,7 @@ class TextDataHandler:
             # check key both for docs and labels
             # Note: some times labels are missing :/
             if dts[i] in docdict.keys():
-                if lbl[i] in qid_title_dict.keys():
+                if lbl[i][0] in qid_title_dict.keys():
                     dataset.append(docdict[dts[i]])
                 else:
                     continue
@@ -305,6 +297,7 @@ class TextDataHandler:
             #label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
             #label_wordIds_vec = self.word_list_to_id_list(label_tokens)
             #labels.append(label_wordIds_vec)
+            labels.append(float(lbl[i][1]))
 
             j += 1
         print("number of docs not in archive: {}".format(cnt))
@@ -312,7 +305,10 @@ class TextDataHandler:
         # print('Full dataset tensor:', dataset.shape, labels.shape)
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
-        return self.padding(dataset, length_max), self.padding(labels, length_max)
+        padded_dataset = self.padding(dataset, length_max)
+        padded_labels = self.padding(labels, length_max)
+
+        return padded_dataset, padded_labels.reshape(len(padded_labels),1)
 
     def padding(self, dataset, length_max):
         '''

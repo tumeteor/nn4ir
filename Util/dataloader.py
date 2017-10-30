@@ -10,7 +10,8 @@ from Util.configs import DataConfig
 
 class DataLoader(object):
     pretrained = False
-    def __init__(self, pretrained=False):
+    embedding = False
+    def __init__(self, pretrained=False, embedding = False):
         logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                             datefmt='%d.%m.%Y %I:%M:%S %p', level=logging.INFO)
         self.log = logging.getLogger("Data Loader")
@@ -22,8 +23,8 @@ class DataLoader(object):
 
         if pretrained:
             '''
-                   Load pretrained embeddings
-                   '''
+            Load pretrained embeddings
+            '''
             self.pretrain_vocab, self.embd = self.loadEmbedding(DataConfig.glove_file_path)
 
     @property
@@ -64,6 +65,10 @@ class DataLoader(object):
             # fit the vocab from glove
             pretrain = vocab_processor.fit(self.pretrain_vocab)
             return np.array(list(vocab_processor.transform(dataset))), labels
+        elif self.embedding:
+            return self.d_handler.prepare_data_for_pretrained_with_old_vocab(dts, lbl,
+                                                                                        qid_title_dict=self._r_datautil.qid_title_dict,
+                                                                                        length_max=DataConfig.max_doc_size)
 
 
         return self._d_handler.prepare_data(dts=dts, lbl=lbl,

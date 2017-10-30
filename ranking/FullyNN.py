@@ -101,10 +101,10 @@ class NN(object):
                     optimizer = tf.train.GradientDescentOptimizer(NNConfig.learning_rate).minimize(loss)
                     # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 
-
-                train_prediction = tf.nn.softmax(logits)
-                valid_prediction = tf.nn.softmax(model(tf_valid_dataset, w_h, b_h, w_o, b_o, False))
-                test_prediction = tf.nn.softmax(model(tf_test_dataset, w_h, b_h, w_o, b_o, False))
+                # linear activation
+                train_prediction = logits
+                valid_prediction = model(tf_valid_dataset, w_h, b_h, w_o, b_o, False)
+                test_prediction = model(tf_test_dataset, w_h, b_h, w_o, b_o, False)
 
                 '''
                 run accuracy scope
