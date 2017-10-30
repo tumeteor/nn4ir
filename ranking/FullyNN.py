@@ -5,7 +5,7 @@ import sys
 import os
 import math
 sys.path.insert(0, os.path.abspath('..'))
-from tensorflow.contrib import learn
+from argparse import ArgumentParser
 
 from Util.dataloader import DataLoader
 from Util.configs import NNConfig, DataConfig
@@ -33,11 +33,11 @@ class NN(object):
         self.valid_labels, self.test_dataset, self.test_labels = self.d_loader.get_ttv()
 
 
-    def simple_NN(self):
+    def simple_NN(self, mode="/cpu:0"):
         logger.info("creating the computational graph...")
         graph = tf.Graph()
         with graph.as_default():
-            with tf.device("/cpu:0"):
+            with tf.device(mode):
                 # Input data
                 tf_train_dataset = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.input_vector_size))
                 tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
@@ -434,10 +434,16 @@ class NN(object):
 
 
 if __name__ == '__main__':
+    parser = ArgumentParser(description='Required arguments')
+    parser.add_argument('-m', '--mode', help='computation mode', required=False)
+    args = parser.parse_args()
+    nn = NN()
     try:
-        nn = NN()
-        nn.simple_NN()
-        logger.info("done...")
+        if args.mode == "gpu":
+            nn.simple_NN(mode="/gpu:0")
+        else:
+            nn.simple_NN()
+        logger.info("done..")
     except Exception as e:
         logger.exception(e)
         raise
