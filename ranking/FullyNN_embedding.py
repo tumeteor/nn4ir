@@ -36,7 +36,7 @@ class NN:
         with graph.as_default():
             with tf.device("/cpu:0"):
                 # Input data
-                tf_train_dataset = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.input_vector_size))
+                tf_train_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
                 tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
 
                 # Do not load data to constant!
@@ -44,10 +44,10 @@ class NN:
                 # tf_test_dataset = tf.constant(self.test_dataset)
 
                 # create a placeholder
-                tf_valid_dataset_init = tf.placeholder(tf.float32, shape=self.valid_dataset.shape)
+                tf_valid_dataset_init = tf.placeholder(tf.int32, shape=self.valid_dataset.shape)
                 tf_valid_dataset = tf.Variable(tf_valid_dataset_init)
 
-                tf_test_dataset_init = tf.placeholder(tf.float32, shape=self.test_dataset.shape)
+                tf_test_dataset_init = tf.placeholder(tf.int32, shape=self.test_dataset.shape)
                 tf_test_dataset = tf.Variable(tf_test_dataset_init)
 
                 if NNConfig.regularization:
