@@ -77,13 +77,13 @@ class NN:
                         tf.random_uniform([self.input_vector_size, NNConfig.embedding_dim], -1.0, 1.0),
                         name="W")
                     embedded_train = tf.nn.embedding_lookup(self.W, tf_train_dataset)
-                    self.embedded_train_expanded = tf.expand_dims(embedded_train, -1)
+                    self.embedded_train_expanded = tf.reduce_sum(embedded_train, [1])
 
                     embedded_valid = tf.nn.embedding_lookup(self.W, tf_valid_dataset)
-                    self.embedded_valid_expanded = tf.expand_dims(embedded_train, -1)
+                    self.embedded_valid_expanded = tf.reduce_sum(embedded_train, [1])
 
                     embedded_test = tf.nn.embedding_lookup(self.W, tf_test_dataset)
-                    self. embedded_train_expanded = tf.expand_dims(embedded_test, -1)
+                    self. embedded_train_expanded = tf.reduce_sum(embedded_test, [1])
 
 
                 # Training computation
