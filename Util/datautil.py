@@ -235,7 +235,7 @@ class TextDataHandler:
             # check key both for docs and labels
             # Note: some times labels are missing :/
             if dts[i] in docdict.keys():
-                if lbl[i] in qid_title_dict.keys():
+                if lbl[i][0] in qid_title_dict.keys():
                     dataset.append(docdict[dts[i]])
                 else:
                     continue
@@ -244,11 +244,11 @@ class TextDataHandler:
 
             # query - label
             # labels.append(qid_title_dict[lbl[i]])
-            labels.append(lbl[i])
+            labels.append(float(lbl[i][1]))
 
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
-        return np.array(dataset, dtype=np.float32), np.array(labels, dtype=np.float32)
+        return dataset, labels
 
     def prepare_data_for_pretrained_with_old_vocab(self, dts, lbl, qid_title_dict, length_max):
         Bing_url_size = len(dts)
@@ -534,7 +534,7 @@ class Retrieval_Data_Util:
                 if int(row[1]) <= top_k:
                     # urls in Bing is not normalized yet
                     d.append(surt(row[4]))
-                    q.append(int(row[1])) # get Bing rank as label
+                    q.append(row[0],row[1]) # get Bing rank as label
             f.close()
         return d, q
 

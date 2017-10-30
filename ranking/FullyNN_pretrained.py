@@ -98,7 +98,8 @@ class NN(object):
                         return tf.matmul(h_lay_train, w_o) + b_o
 
                 logits = model(train_embed, w_h, b_h, w_o, b_o, True)
-                loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
+                loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * tf.cast(tf.shape(tf_train_labels)[0], tf.float32))
+                #loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
                 # tf.nn.sigmoid_cross_entropy_with_logits instead of tf.nn.softmax_cross_entropy_with_logits for multi-label case
                 if NNConfig.regularization:
                     loss += beta_regu * (tf.nn.l2_loss(w_h) + tf.nn.l2_loss(w_o))
@@ -111,15 +112,21 @@ class NN(object):
                     optimizer = tf.train.GradientDescentOptimizer(NNConfig.learning_rate).minimize(loss)
                     # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 
-                train_prediction = tf.nn.softmax(logits)
-                valid_prediction = tf.nn.softmax(model(valid_embed, w_h, b_h, w_o, b_o, False))
-                test_prediction = tf.nn.softmax(model(test_embed, w_h, b_h, w_o, b_o, False))
+                #train_prediction = tf.nn.softmax(logits)
+                #valid_prediction = tf.nn.softmax(model(valid_embed, w_h, b_h, w_o, b_o, False))
+                #test_prediction = tf.nn.softmax(model(test_embed, w_h, b_h, w_o, b_o, False))
+
+                # linear activation
+                train_prediction = logits
+                valid_prediction = model(valid_embed, w_h, b_h, w_o, b_o, False)
+                test_prediction = model(test_embed, w_h, b_h, w_o, b_o, False)
 
                 with tf.name_scope('accuracy'):
-                    pre = tf.placeholder("float", shape=[None, DataConfig.max_doc_size])
-                    lbl = tf.placeholder("float", shape=[None, DataConfig.max_doc_size])
-                    accuracy = tf.reduce_mean(
-                        tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
+                    pre = tf.placeholder("float", shape=[None, 1])
+                    lbl = tf.placeholder("float", shape=[None, 1])
+                    #accuracy = tf.reduce_mean(
+                        #tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
+                    accuracy = tf.reduce_sum(tf.pow(pre - lbl, 2)) / (2 * tf.cast(tf.shape(lbl)[0], tf.float32))
 
         logger.info('running the session...')
         with tf.Session(graph=graph, config=tf.ConfigProto(log_device_placement=True)) as session:
@@ -131,7 +138,8 @@ class NN(object):
             for step in range(NNConfig.num_steps):
                 offset = (step * NNConfig.batch_size) % (self.train_labels.shape[0] - NNConfig.batch_size)
                 batch_data = self.train_dataset[offset:(offset + NNConfig.batch_size), :]
-                batch_labels = self.train_labels[offset:(offset + NNConfig.batch_size), :]
+                batch_labels = self.train_labels[offset:(offset + NNConfig.batch_size)]
+                batch_labels = batch_labels.reshape(len(batch_labels),1)
 
                 # print('-' * 80)
                 # for vec in batch_labels:

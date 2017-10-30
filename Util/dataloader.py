@@ -43,9 +43,9 @@ class DataLoader(object):
         start_tr, end_tr = 0, train_size - 1
         start_v, end_v = end_tr + 1, end_tr + valid_size
         start_te, end_te = end_v + 1, end_v + test_size
-        train_dataset, train_labels = dataset[start_tr:end_tr, :], labels[start_tr:end_tr, :]
-        valid_dataset, valid_labels = dataset[start_v:end_v, ::], labels[start_v:end_v, :]
-        test_dataset, test_labels = dataset[start_te:end_te, ::], labels[start_te:end_te, :]
+        train_dataset, train_labels = dataset[start_tr:end_tr, :], labels[start_tr:end_tr]
+        valid_dataset, valid_labels = dataset[start_v:end_v, :], labels[start_v:end_v, :]
+        test_dataset, test_labels = dataset[start_te:end_te, :], labels[start_te:end_te, :]
         print('Training:', train_dataset.shape, train_labels.shape)
         print('Validation:', valid_dataset.shape, valid_labels.shape)
         print('Testing:', test_dataset.shape, test_labels.shape)
@@ -63,7 +63,7 @@ class DataLoader(object):
             vocab_processor = learn.preprocessing.VocabularyProcessor(DataConfig.max_doc_size)
             # fit the vocab from glove
             pretrain = vocab_processor.fit(self.pretrain_vocab)
-            return np.array(list(vocab_processor.transform(dataset))), np.array(list(vocab_processor.transform(labels)))
+            return np.array(list(vocab_processor.transform(dataset))), labels
 
 
         return self._d_handler.prepare_data(dts=dts, lbl=lbl,

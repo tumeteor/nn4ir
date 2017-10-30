@@ -27,7 +27,8 @@ class NN(object):
     def __init__(self):
         self.d_loader = DataLoader()
         self.input_vector_size = self.d_loader.d_handler.get_vocab_size()
-        self.output_vector_size = self.d_loader.d_handler.get_vocab_size()
+        # output vector size = 1 for scoring model
+        self.output_vector_size = 1
         self.train_dataset, self.train_labels, self.valid_dataset, \
         self.valid_labels, self.test_dataset, self.test_labels = self.d_loader.get_ttv()
 
@@ -86,7 +87,9 @@ class NN(object):
 
 
                 logits = model(tf_train_dataset, w_h, b_h, w_o, b_o, True)
-                loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
+                loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) /  \
+                       (2 * tf.cast(tf.shape(tf_train_labels)[0], tf.float32))
+                #loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
                 # tf.nn.sigmoid_cross_entropy_with_logits instead of tf.nn.softmax_cross_entropy_with_logits for multi-label case
                 if NNConfig.regularization:
                     loss += beta_regu * (tf.nn.l2_loss(w_h) + tf.nn.l2_loss(w_o))
@@ -110,7 +113,9 @@ class NN(object):
                     pre = tf.placeholder("float", shape=[None, self.output_vector_size])
                     lbl = tf.placeholder("float", shape=[None, self.output_vector_size])
                     # compute the mean of all predictions
-                    accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
+                    accuracy = tf.reduce_sum(tf.pow(pre - lbl, 2)) / (2 * tf.cast(tf.shape(lbl)[0], tf.float32))
+
+                    # accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
 
         logger.info('running the session...')
         with tf.Session(graph=graph,config=tf.ConfigProto(log_device_placement=True)) as session:
