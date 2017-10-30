@@ -43,7 +43,7 @@ class DataLoader(object):
         start_tr, end_tr = 0, train_size - 1
         start_v, end_v = end_tr + 1, end_tr + valid_size
         start_te, end_te = end_v + 1, end_v + test_size
-        train_dataset, train_labels = dataset[start_tr:end_tr, :], labels[start_tr:end_tr]
+        train_dataset, train_labels = dataset[start_tr:end_tr, :], labels[start_tr:end_tr, :]
         valid_dataset, valid_labels = dataset[start_v:end_v, :], labels[start_v:end_v, :]
         test_dataset, test_labels = dataset[start_te:end_te, :], labels[start_te:end_te, :]
         print('Training:', train_dataset.shape, train_labels.shape)
