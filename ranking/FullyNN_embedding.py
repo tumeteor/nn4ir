@@ -65,7 +65,7 @@ class NN:
                 def init_biases(shape):
                     return  tf.Variable(tf.zeros(shape))
 
-                w_h = init_weights([self.input_vector_size, NNConfig.num_hidden_nodes])
+                w_h = init_weights([NNConfig.embedding_dim, NNConfig.num_hidden_nodes])
                 b_h = init_biases([NNConfig.num_hidden_nodes])
 
                 w_o = init_weights([NNConfig.num_hidden_nodes, self.output_vector_size])
@@ -83,7 +83,7 @@ class NN:
                     self.embedded_valid_expanded = tf.reduce_sum(embedded_train, [1])
 
                     embedded_test = tf.nn.embedding_lookup(self.W, tf_test_dataset)
-                    self. embedded_train_expanded = tf.reduce_sum(embedded_test, [1])
+                    self.embedded_test_expanded = tf.reduce_sum(embedded_test, [1])
 
 
                 # Training computation
