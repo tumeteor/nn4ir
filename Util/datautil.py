@@ -12,7 +12,6 @@ import tensorflow as tf
 import six.moves.cPickle as pickle
 import logging
 from surt import surt
-from scipy.stats.mstats import mquantiles
 import csv
 
 # for long CSV
@@ -587,7 +586,7 @@ class Utilities:
 
     @staticmethod
     def ranknorm():
-        ranks = list(range(1,101))
+        ranks = list(range(100,0,-1))
         r_norms = [r/100 for r in ranks]
-        return mquantiles(r_norms)
+        return r_norms
 
