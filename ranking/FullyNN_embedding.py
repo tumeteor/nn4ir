@@ -153,15 +153,15 @@ class NN:
                 logger.debug('optimizing finished')
                 if (step % NNConfig.summary_steps == 0):
                     logger.info("Minibatch loss at step %d: %f" % (step, l))
-                    logger.info("Minibatch accuracy: %.3f%%" % session.run(accuracy,
+                    logger.info("Minibatch MSE: %.3f" % session.run(accuracy,
                                                                            feed_dict={pre: predictions, lbl: batch_labels}))
                     # self.print_words(predictions, batch_labels)
-                    logger.info('Validation accuracy:  %.3f%%' % session.run(accuracy,
+                    logger.info('Validation MSE:  %.3f' % session.run(accuracy,
                                                                              feed_dict={pre: valid_prediction.eval(),
                                                                                         lbl: self.valid_labels}))
-                    logger.info('Test accuracy:  %.3f%%' % session.run(accuracy,
+                    logger.info('Test MSE:  %.3f' % session.run(accuracy,
                                                                        feed_dict={pre: test_prediction.eval(), lbl: self.test_labels}))
-            self.print_words(test_prediction.eval(), self.test_labels)
+            #self.print_words(test_prediction.eval(), self.test_labels)
 
     def print_words(self, preds, labels):
         for pred, label in zip(preds, labels):
