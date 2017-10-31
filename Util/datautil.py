@@ -295,6 +295,7 @@ class TextDataHandler:
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
         padded_dataset = self.padding(dataset, length_max)
+        labels = np.array(labels)
 
         return padded_dataset, labels.reshape(len(labels), 1)
 
