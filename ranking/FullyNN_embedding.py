@@ -34,7 +34,7 @@ class NN:
         logger.info("creating the computational graph...")
         graph = tf.Graph()
         with graph.as_default():
-            with tf.device("/cpu:0"):
+            with tf.device(mode):
                 # Input data
                 tf_train_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
                 tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
@@ -108,9 +108,9 @@ class NN:
                 if NNConfig.learning_rate_decay:
                     learning_rate = tf.train.exponential_decay(NNConfig.learning_rate,global_step,
                                                                NNConfig.decay_steps, NNConfig.decay_rate, staircase=True)
-                    optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss, global_step = global_step)
+                    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step = global_step)
                 else:
-                    optimizer = tf.train.GradientDescentOptimizer(NNConfig.learning_rate).minimize(loss)
+                    optimizer = tf.train.AdamOptimizer(NNConfig.learning_rate).minimize(loss)
                     # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 
                 # score model: linear activation

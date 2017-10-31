@@ -6,6 +6,7 @@ import os
 import math
 sys.path.insert(0, os.path.abspath('..'))
 import csv
+from argparse import ArgumentParser
 
 from Util.dataloader import DataLoader
 from Util.configs import NNConfig, DataConfig
@@ -27,7 +28,7 @@ class NN(object):
         self.train_dataset, self.train_labels, self.valid_dataset, \
         self.valid_labels, self.test_dataset, self.test_labels = self.d_loader.get_ttv()
 
-    def simple_NN_w_embedding(self):
+    def simple_NN_w_embedding(self, mode="/cpu:0"):
         logger.info("creating the computational graph...")
         graph = tf.Graph()
         # sess = tf.Session(graph=graph)
@@ -107,9 +108,9 @@ class NN(object):
                     learning_rate = tf.train.exponential_decay(NNConfig.learning_rate, global_step,
                                                                NNConfig.decay_steps, NNConfig.decay_rate,
                                                                staircase=True)
-                    optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss, global_step=global_step)
+                    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step=global_step)
                 else:
-                    optimizer = tf.train.GradientDescentOptimizer(NNConfig.learning_rate).minimize(loss)
+                    optimizer = tf.train.AdamOptimizer(NNConfig.learning_rate).minimize(loss)
                     # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 
                 #train_prediction = tf.nn.softmax(logits)
@@ -147,7 +148,6 @@ class NN(object):
                 #   print(self.get_words(vec))
 
                 feed_dict = {tf_train_dataset: batch_data, tf_train_labels: batch_labels}
-                logger.info("prediction shape: {}".format(tf.shape(train_prediction)))
                 if NNConfig.regularization:
                     feed_dict[beta_regu] = NNConfig.beta_regu
                 _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
@@ -167,10 +167,15 @@ class NN(object):
 
 
 if __name__ == '__main__':
+    parser = ArgumentParser(description='Required arguments')
+    parser.add_argument('-m', '--mode', help='computation mode', required=False)
+    args = parser.parse_args()
+    nn = NN()
     try:
-        nn = NN()
-        nn.simple_NN_w_embedding()
-        logger.info("done...")
+        if args.mode == "gpu":
+            nn.simple_NN(mode="/gpu:0")
+        else: nn.simple_NN()
+        logger.info("done..")
     except Exception as e:
         logger.exception(e)
         raise

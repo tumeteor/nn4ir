@@ -195,7 +195,7 @@ class TextDataHandler:
         print('Full dataset tensor:', dataset.shape, labels.shape)
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
-        return dataset, labels.reshape(len(labels), 1)
+        return dataset, labels
 
 
     def prepare_data_for_pretrained(self, dts, lbl, qid_title_dict):
