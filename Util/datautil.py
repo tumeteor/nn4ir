@@ -270,7 +270,8 @@ class TextDataHandler:
         '''
         dataset = list()
         labels = list()
-        cnt = 0
+        # normalized Bing rank scores
+        ranks = Utilities.ranknorm()
         for i in range(0, Bing_url_size - 1):
             # doc
             # check key both for docs and labels
@@ -281,16 +282,13 @@ class TextDataHandler:
                 else:
                     continue
             else:
-                cnt += 1
                 continue
 
             # query - label
             #label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
             #label_wordIds_vec = self.word_list_to_id_list(label_tokens)
             #labels.append(label_wordIds_vec)
-            labels.append(float(lbl[i][1]))
-
-        print("number of docs not in archive: {}".format(cnt))
+            labels.append(ranks[int(lbl[i][1]) - 1])
 
         # print('Full dataset tensor:', dataset.shape, labels.shape)
         # print('Mean:', np.mean(dataset))
