@@ -100,7 +100,7 @@ class NN:
                 logger.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_expanded)))
                 logits = model(self.embedded_train_expanded, w_h, b_h, w_o, b_o, True)
                 loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) /  \
-                       (2 * tf.cast(tf.shape(tf_train_labels)[0], tf.float32))
+                       (2 * NNConfig.batch_size)
                 #loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
                 # tf.nn.sigmoid_cross_entropy_with_logits instead of tf.nn.softmax_cross_entropy_with_logits for multi-label case
                 if NNConfig.regularization:
@@ -108,9 +108,9 @@ class NN:
                 if NNConfig.learning_rate_decay:
                     learning_rate = tf.train.exponential_decay(NNConfig.learning_rate,global_step,
                                                                NNConfig.decay_steps, NNConfig.decay_rate, staircase=True)
-                    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step = global_step)
+                    optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss, global_step = global_step)
                 else:
-                    optimizer = tf.train.AdamOptimizer(NNConfig.learning_rate).minimize(loss)
+                    optimizer = tf.train.GradientDescentOptimizer(NNConfig.learning_rate).minimize(loss)
                     # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 
                 # score model: linear activation

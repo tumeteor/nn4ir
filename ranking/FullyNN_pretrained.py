@@ -99,7 +99,7 @@ class NN(object):
                         return tf.matmul(h_lay_train, w_o) + b_o
 
                 logits = model(train_embed, w_h, b_h, w_o, b_o, True)
-                loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * tf.cast(tf.shape(tf_train_labels)[0], tf.float32))
+                loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * (2 * NNConfig.batch_size))
                 #loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
                 # tf.nn.sigmoid_cross_entropy_with_logits instead of tf.nn.softmax_cross_entropy_with_logits for multi-label case
                 if NNConfig.regularization:
