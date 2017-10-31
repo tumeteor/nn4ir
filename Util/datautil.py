@@ -129,7 +129,7 @@ class TextDataHandler:
     def make_arrays(self, nb_rows, vec_size):
         if nb_rows:
             dataset = np.ndarray((nb_rows, vec_size), dtype=np.float32)
-            labels = np.ndarray((nb_rows), dtype=np.float32)
+            labels = np.ndarray((nb_rows, 1), dtype=np.float32)
         else:
             dataset, labels = None, None
         return dataset, labels
@@ -220,24 +220,25 @@ class TextDataHandler:
         '''
         retrieve queries for documents (urls)
         '''
-        # nIns = 0
-        # for i in range(0, Bing_url_size - 1):
+        nIns = 0
+        for i in range(0, Bing_url_size - 1):
             # doc
             # check key both for docs and labels
             # Note: some times labels are missing :/
-            # if dts[i] in docdict.keys():
-            #     if lbl[i] in qid_title_dict.keys():
-            #         nIns += 1
+            if dts[i] in docdict.keys():
+                if lbl[i] in qid_title_dict.keys():
+                    nIns += 1
 
-        dataset = list()
-        labels = list()
+
+        dataset, labels = self.make_arrays(nIns, self.get_vocab_size())
+        j = 0  # dataset idx
         for i in range(0, Bing_url_size - 1):
             # doc
             # check key both for docs and labels
             # Note: some times labels are missing :/
             if dts[i] in docdict.keys():
                 if lbl[i][0] in qid_title_dict.keys():
-                    dataset.append(docdict[dts[i]])
+                    dataset[j] = docdict[dts[i]]
                 else:
                     continue
             else:
@@ -245,7 +246,7 @@ class TextDataHandler:
 
             # query - label
             # labels.append(qid_title_dict[lbl[i]])
-            labels.append(float(lbl[i][1]))
+            labels[j] = float(lbl[i][1])
 
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
@@ -275,9 +276,16 @@ class TextDataHandler:
         '''
         retrieve queries for documents (urls)
         '''
+        nIns = 0
+        for i in range(0, Bing_url_size - 1):
+            # doc
+            # check key both for docs and labels
+            # Note: some times labels are missing :/
+            if dts[i] in docdict.keys():
+                if lbl[i] in qid_title_dict.keys():
+                    nIns += 1
 
-        dataset = list()
-        labels = list()
+        dataset, labels = self.make_arrays(nIns, self.get_vocab_size())
         cnt = 0
         j = 0  # dataset idx
         for i in range(0, Bing_url_size - 1):
@@ -286,7 +294,7 @@ class TextDataHandler:
             # Note: some times labels are missing :/
             if dts[i] in docdict.keys():
                 if lbl[i][0] in qid_title_dict.keys():
-                    dataset.append(docdict[dts[i]])
+                    dataset[j] = docdict[dts[i]]
                 else:
                     continue
             else:
@@ -297,7 +305,7 @@ class TextDataHandler:
             #label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
             #label_wordIds_vec = self.word_list_to_id_list(label_tokens)
             #labels.append(label_wordIds_vec)
-            labels.append(float(lbl[i][1]))
+            labels[j] = float(lbl[i][1])
 
             j += 1
         print("number of docs not in archive: {}".format(cnt))
