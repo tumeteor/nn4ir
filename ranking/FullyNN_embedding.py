@@ -72,7 +72,7 @@ class NN:
                 b_o = init_biases([self.output_vector_size])
 
                 # Embedding layer
-                with tf.name_scope("embedding"):
+                with tf.device('/cpu:0'), tf.name_scope("embedding"):
                     self.W = tf.Variable(
                         tf.random_uniform([self.input_vector_size, NNConfig.embedding_dim], -1.0, 1.0),
                         name="W")
