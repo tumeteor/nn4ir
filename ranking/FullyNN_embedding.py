@@ -117,7 +117,7 @@ class NN:
                 # score model: linear activation
                 train_prediction = logits
                 valid_prediction = tf.transpose(model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False))
-                test_prediction = tf.tranpose(model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False))
+                test_prediction = tf.transpose(model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False))
 
                 '''
                 run accuracy scope
