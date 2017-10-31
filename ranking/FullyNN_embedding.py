@@ -148,9 +148,9 @@ class NN:
                 feed_dict = {tf_train_dataset: batch_data, tf_train_labels: batch_labels}
                 if NNConfig.regularization:
                     feed_dict[beta_regu] = NNConfig.beta_regu
-                logger.info('start optimizing')
+                logger.debug('start optimizing')
                 _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
-                logger.info('optimizing finished')
+                logger.debug('optimizing finished')
                 if (step % NNConfig.summary_steps == 0):
                     logger.info("Minibatch loss at step %d: %f" % (step, l))
                     logger.info("Minibatch accuracy: %.3f%%" % session.run(accuracy,
