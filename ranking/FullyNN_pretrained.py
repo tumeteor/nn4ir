@@ -108,9 +108,9 @@ class NN(object):
                     learning_rate = tf.train.exponential_decay(NNConfig.learning_rate, global_step,
                                                                NNConfig.decay_steps, NNConfig.decay_rate,
                                                                staircase=True)
-                    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step=global_step)
+                    optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss, global_step=global_step)
                 else:
-                    optimizer = tf.train.AdamOptimizer(NNConfig.learning_rate).minimize(loss)
+                    optimizer = tf.train.GradientDescentOptimizer(NNConfig.learning_rate).minimize(loss)
                     # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 
                 #train_prediction = tf.nn.softmax(logits)
@@ -150,7 +150,9 @@ class NN(object):
                 feed_dict = {tf_train_dataset: batch_data, tf_train_labels: batch_labels}
                 if NNConfig.regularization:
                     feed_dict[beta_regu] = NNConfig.beta_regu
+                logger.info('start optimizing')
                 _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
+                logger.info('optimizing done')
                 if (step % NNConfig.summary_steps == 0):
                     logger.info("Minibatch loss at step %d: %f" % (step, l))
                     logger.info("Minibatch accuracy: %.3f%%" % session.run(accuracy,
