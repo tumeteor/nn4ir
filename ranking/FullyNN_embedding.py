@@ -99,6 +99,7 @@ class NN:
 
                 logger.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_expanded)))
                 logits = model(self.embedded_train_expanded, w_h, b_h, w_o, b_o, True)
+                logits = tf.transpose(logits)
                 loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) /  \
                        (2 * NNConfig.batch_size)
                 #loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
@@ -115,8 +116,8 @@ class NN:
 
                 # score model: linear activation
                 train_prediction = logits
-                valid_prediction = model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False)
-                test_prediction = model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False)
+                valid_prediction = tf.transpose(model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False))
+                test_prediction = tf.tranpose(model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False))
 
                 '''
                 run accuracy scope
@@ -150,13 +151,12 @@ class NN:
                     feed_dict[beta_regu] = NNConfig.beta_regu
                 logger.debug('start optimizing')
                 _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
-                logger.info(predictions)
-                logger.info(batch_labels)
                 logger.debug('optimizing finished')
                 if (step % NNConfig.summary_steps == 0):
+                    logger.info(predictions)
                     logger.info("Minibatch loss at step %d: %f" % (step, l))
                     logger.info("Minibatch MSE: %.3f" % session.run(accuracy,
-                                                                           feed_dict={pre: tf.transpose(predictions), lbl: batch_labels}))
+                                                                           feed_dict={pre: predictions, lbl: batch_labels}))
                     # self.print_words(predictions, batch_labels)
                     logger.info('Validation MSE:  %.3f' % session.run(accuracy,
                                                                              feed_dict={pre: valid_prediction.eval(),
