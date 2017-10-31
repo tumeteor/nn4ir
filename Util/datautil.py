@@ -226,7 +226,7 @@ class TextDataHandler:
             # check key both for docs and labels
             # Note: some times labels are missing :/
             if dts[i] in docdict.keys():
-                if lbl[i] in qid_title_dict.keys():
+                if lbl[i][0] in qid_title_dict.keys():
                     nIns += 1
 
 
@@ -282,7 +282,7 @@ class TextDataHandler:
             # check key both for docs and labels
             # Note: some times labels are missing :/
             if dts[i] in docdict.keys():
-                if lbl[i] in qid_title_dict.keys():
+                if lbl[i][0] in qid_title_dict.keys():
                     nIns += 1
 
         dataset, labels = self.make_arrays(nIns, self.get_vocab_size())
