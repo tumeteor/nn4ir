@@ -18,7 +18,7 @@ logger.addHandler(consoleHandler)
 
 class NN:
     def __init__(self):
-        self.d_loader = DataLoader()
+        self.d_loader = DataLoader(embedding=True)
         self.input_vector_size = self.d_loader.d_handler.get_vocab_size()
         # output vector size = 1 for scoring model
         self.output_vector_size = 1
@@ -108,9 +108,9 @@ class NN:
                 if NNConfig.learning_rate_decay:
                     learning_rate = tf.train.exponential_decay(NNConfig.learning_rate,global_step,
                                                                NNConfig.decay_steps, NNConfig.decay_rate, staircase=True)
-                    optimizer = tf.train.GradientDescentOptimizer(learning_rate).minimize(loss, global_step = global_step)
+                    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step = global_step)
                 else:
-                    optimizer = tf.train.GradientDescentOptimizer(NNConfig.learning_rate).minimize(loss)
+                    optimizer = tf.train.AdamDescentOptimizer(NNConfig.learning_rate).minimize(loss)
                     # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 
                 # score model: linear activation

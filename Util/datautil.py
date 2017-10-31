@@ -198,7 +198,7 @@ class TextDataHandler:
         return dataset, labels
 
 
-    def prepare_data_for_pretrained(self, dts, lbl, qid_title_dict):
+    def prepare_data_for_pretrained_embedding(self, dts, lbl, qid_title_dict):
 
         Bing_url_size = len(dts)
         if Bing_url_size != len(lbl):
@@ -251,7 +251,7 @@ class TextDataHandler:
         # print('Standard deviation:', np.std(dataset))
         return dataset, labels.reshape(len(labels), 1)
 
-    def prepare_data_for_pretrained_with_old_vocab(self, dts, lbl, qid_title_dict, length_max):
+    def prepare_data_for_embedding_with_old_vocab(self, dts, lbl, qid_title_dict, length_max):
         Bing_url_size = len(dts)
         if Bing_url_size != len(lbl):
             raise 'there is problem in the data...'

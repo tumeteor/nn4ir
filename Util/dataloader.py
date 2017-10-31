@@ -20,6 +20,7 @@ class DataLoader(object):
         self._r_datautil = Retrieval_Data_Util(DataConfig.run_path, DataConfig.qrel_path, DataConfig.qtitle_path)
 
         self.pretrained = pretrained
+        self.embedding = embedding
 
         if pretrained:
             '''
@@ -59,24 +60,29 @@ class DataLoader(object):
         '''
         dts, lbl = self._r_datautil.get_pseudo_rel_qd_Bing(top_k=100)
         if self.pretrained:
-            dataset, labels = self._d_handler.prepare_data_for_pretrained(dts,lbl,qid_title_dict=self._r_datautil.qid_title_dict)
+            dataset, labels = self._d_handler.prepare_data_for_pretrained_embedding(dts, lbl, qid_title_dict=self._r_datautil.qid_title_dict)
             from tensorflow.contrib import learn
             vocab_processor = learn.preprocessing.VocabularyProcessor(DataConfig.max_doc_size)
             # fit the vocab from glove
             pretrain = vocab_processor.fit(self.pretrain_vocab)
             return np.array(list(vocab_processor.transform(dataset))), labels
         elif self.embedding:
-            return self.d_handler.prepare_data_for_pretrained_with_old_vocab(dts, lbl,
-                                                                                        qid_title_dict=self._r_datautil.qid_title_dict,
-                                                                                        length_max=DataConfig.max_doc_size)
+            return self.d_handler.prepare_data_for_embedding_with_old_vocab(dts, lbl,
+                                                                            qid_title_dict=self._r_datautil.qid_title_dict,
+                                                                            length_max=DataConfig.max_doc_size)
 
 
         return self._d_handler.prepare_data(dts=dts, lbl=lbl,
                                             qid_title_dict=self._r_datautil.qid_title_dict)
 
     def get_ttv(self):
-        pickle_file = os.path.join(DataConfig.save_dir_data, 'robust_txt_vec.pkl') if self.pretrained else \
-            os.path.join(DataConfig.save_dir_data, 'robust_binary_vec.pkl')
+        if self.pretrained:
+            pickle_file = os.path.join(DataConfig.save_dir_data, 'robust_pre_vec.pkl')
+        elif self.embedding:
+            pickle_file = os.path.join(DataConfig.save_dir_data, 'robust_emb_vec.pkl')
+        else:
+            pickle_file = os.path.join(DataConfig.save_dir_data, 'robust_binary_vec.pkl')
+
         if os.path.exists(pickle_file):
             print('%s already present - Skipping pickling.' % pickle_file)
             with open(pickle_file, 'rb') as f:
