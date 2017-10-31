@@ -19,7 +19,7 @@ logger.addHandler(consoleHandler)
 class NN:
     def __init__(self):
         self.d_loader = DataLoader(embedding=True)
-        self.input_vector_size = self.d_loader.d_handler.get_vocab_size()
+        self.input_vector_size = DataConfig.max_doc_size
         # output vector size = 1 for scoring model
         self.output_vector_size = 1
         self.train_dataset, self.train_labels, self.valid_dataset, \
