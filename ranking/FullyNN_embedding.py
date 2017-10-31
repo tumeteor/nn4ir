@@ -150,6 +150,8 @@ class NN:
                     feed_dict[beta_regu] = NNConfig.beta_regu
                 logger.debug('start optimizing')
                 _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
+                logger.info(predictions)
+                logger.info(batch_labels)
                 logger.debug('optimizing finished')
                 if (step % NNConfig.summary_steps == 0):
                     logger.info("Minibatch loss at step %d: %f" % (step, l))
