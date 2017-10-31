@@ -152,12 +152,11 @@ class NN:
                 _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
                 logger.debug('optimizing finished')
                 if (step % NNConfig.summary_steps == 0):
-                    logger.info(predictions)
                     logger.info("Minibatch loss at step %d: %f" % (step, l))
                     logger.info("Minibatch MSE: %.3f" % session.run(accuracy,
                                                                            feed_dict={pre: predictions, lbl: batch_labels}))
                     for i in range(0,5):
-                        print("label value:", predictions[i], \
+                        logger.info("label value:", predictions[i], \
                               "estimated value:", batch_labels[i])
                     # self.print_words(predictions, batch_labels)
                     logger.info('Validation MSE:  %.3f' % session.run(accuracy,
