@@ -156,7 +156,7 @@ class NN:
                 if (step % NNConfig.summary_steps == 0):
                     logger.info("Minibatch loss at step %d: %f" % (step, l))
                     logger.info("Minibatch MSE: %.3f" % session.run(accuracy,
-                                                                           feed_dict={pre: predictions, lbl: batch_labels}))
+                                                                           feed_dict={pre: tf.transpose(predictions), lbl: batch_labels}))
                     # self.print_words(predictions, batch_labels)
                     logger.info('Validation MSE:  %.3f' % session.run(accuracy,
                                                                              feed_dict={pre: valid_prediction.eval(),
