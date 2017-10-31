@@ -239,7 +239,7 @@ class TextDataHandler:
 
             # query - label
             # labels.append(qid_title_dict[lbl[i]])
-            labels.append(ranks[int(lbl[i][1])])
+            labels.append(ranks[int(lbl[i][1])-1])
 
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
