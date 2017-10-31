@@ -12,7 +12,7 @@ import tensorflow as tf
 import six.moves.cPickle as pickle
 import logging
 from surt import surt
-
+from scipy.stats.mstats import mquantiles
 import csv
 
 # for long CSV
@@ -223,6 +223,8 @@ class TextDataHandler:
 
         dataset = list()
         labels = list()
+        # normalized Bing rank scores
+        ranks = Utilities.ranknorm()
         for i in range(0, Bing_url_size - 1):
             # doc
             # check key both for docs and labels
@@ -237,7 +239,7 @@ class TextDataHandler:
 
             # query - label
             # labels.append(qid_title_dict[lbl[i]])
-            labels.append(float(lbl[i][1]))
+            labels.append(ranks[int(lbl[i][1])])
 
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
@@ -534,7 +536,8 @@ class Retrieval_Data_Util:
         return (d, q) in self.doc_query_pairs
 
 
-class Utilities():
+class Utilities:
+
     @staticmethod
     def shufflize(data, label):
         assert len(data) == len(label)
@@ -581,3 +584,10 @@ class Utilities():
     def accuracy(predictions, labels):
         return (100.0 * np.sum(np.argmax(predictions, 1) == np.argmax(labels, 1))
                 / predictions.shape[0])
+
+    @staticmethod
+    def ranknorm():
+        ranks = list(range(1,101))
+        r_norms = [r/100 for r in ranks]
+        return mquantiles(r_norms)
+
