@@ -220,25 +220,16 @@ class TextDataHandler:
         '''
         retrieve queries for documents (urls)
         '''
-        nIns = 0
+
+        dataset = list()
+        labels = list()
         for i in range(0, Bing_url_size - 1):
             # doc
             # check key both for docs and labels
             # Note: some times labels are missing :/
             if dts[i] in docdict.keys():
                 if lbl[i][0] in qid_title_dict.keys():
-                    nIns += 1
-
-
-        dataset, labels = self.make_arrays(nIns, self.get_vocab_size())
-        j = 0  # dataset idx
-        for i in range(0, Bing_url_size - 1):
-            # doc
-            # check key both for docs and labels
-            # Note: some times labels are missing :/
-            if dts[i] in docdict.keys():
-                if lbl[i][0] in qid_title_dict.keys():
-                    dataset[j] = docdict[dts[i]]
+                    dataset.append(docdict[dts[i]])
                 else:
                     continue
             else:
@@ -246,7 +237,7 @@ class TextDataHandler:
 
             # query - label
             # labels.append(qid_title_dict[lbl[i]])
-            labels[j] = float(lbl[i][1])
+            labels.append(float(lbl[i][1]))
 
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
@@ -276,25 +267,16 @@ class TextDataHandler:
         '''
         retrieve queries for documents (urls)
         '''
-        nIns = 0
-        for i in range(0, Bing_url_size - 1):
-            # doc
-            # check key both for docs and labels
-            # Note: some times labels are missing :/
-            if dts[i] in docdict.keys():
-                if lbl[i][0] in qid_title_dict.keys():
-                    nIns += 1
-
-        dataset, labels = self.make_arrays(nIns, self.get_vocab_size())
+        dataset = list()
+        labels = list()
         cnt = 0
-        j = 0  # dataset idx
         for i in range(0, Bing_url_size - 1):
             # doc
             # check key both for docs and labels
             # Note: some times labels are missing :/
             if dts[i] in docdict.keys():
                 if lbl[i][0] in qid_title_dict.keys():
-                    dataset[j] = docdict[dts[i]]
+                    dataset.append(docdict[dts[i]])
                 else:
                     continue
             else:
@@ -305,9 +287,8 @@ class TextDataHandler:
             #label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
             #label_wordIds_vec = self.word_list_to_id_list(label_tokens)
             #labels.append(label_wordIds_vec)
-            labels[j] = float(lbl[i][1])
+            labels.append(float(lbl[i][1]))
 
-            j += 1
         print("number of docs not in archive: {}".format(cnt))
 
         # print('Full dataset tensor:', dataset.shape, labels.shape)
@@ -315,7 +296,7 @@ class TextDataHandler:
         # print('Standard deviation:', np.std(dataset))
         padded_dataset = self.padding(dataset, length_max)
 
-        return padded_dataset, labels
+        return padded_dataset, labels.reshape(len(labels), 1)
 
     def padding(self, dataset, length_max):
         '''
