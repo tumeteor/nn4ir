@@ -7,7 +7,7 @@ import math
 sys.path.insert(0, os.path.abspath('..'))
 import csv
 from argparse import ArgumentParser
-
+from ranking.NN import NN
 from Util.dataloader import DataLoader
 from Util.configs import NNConfig, DataConfig
 
@@ -22,7 +22,7 @@ logger.setLevel(logging.INFO)
 logger.addHandler(fileHandler)
 logger.addHandler(consoleHandler)
 
-class NN(object):
+class NN(NN):
     def __init__(self):
         self.d_loader = DataLoader(pretrained=True)
         self.train_dataset, self.train_labels, self.valid_dataset, \

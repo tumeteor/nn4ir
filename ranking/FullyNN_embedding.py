@@ -4,7 +4,7 @@ from Util.configs import NNConfig, DataConfig
 from Util.dataloader import DataLoader
 import logging
 from argparse import ArgumentParser
-
+from ranking.NN import NN
 import logging
 logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
 fileHandler = logging.FileHandler("{0}/{1}.log".format("./", "Fullyconnected_NN"))
@@ -16,7 +16,7 @@ logger.setLevel(logging.INFO)
 logger.addHandler(fileHandler)
 logger.addHandler(consoleHandler)
 
-class NN:
+class NN(NN):
     def __init__(self):
         self.d_loader = DataLoader(embedding=True)
         self.input_vector_size = DataConfig.max_doc_size
@@ -44,11 +44,11 @@ class NN:
                 # tf_test_dataset = tf.constant(self.test_dataset)
 
                 # create a placeholder
-                tf_valid_dataset_init = tf.placeholder(tf.int32, shape=self.valid_dataset.shape)
-                tf_valid_dataset = tf.Variable(tf_valid_dataset_init)
+                tf_valid_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
+                #tf_valid_dataset = tf.Variable(tf_valid_dataset_init)
 
-                tf_test_dataset_init = tf.placeholder(tf.int32, shape=self.test_dataset.shape)
-                tf_test_dataset = tf.Variable(tf_test_dataset_init)
+                tf_test_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
+                #tf_test_dataset = tf.Variable(tf_test_dataset_init)
 
                 if NNConfig.regularization:
                     beta_regu = tf.placeholder(tf.float32)
@@ -110,7 +110,7 @@ class NN:
                                                                NNConfig.decay_steps, NNConfig.decay_rate, staircase=True)
                     optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step = global_step)
                 else:
-                    optimizer = tf.train.AdamDescentOptimizer(NNConfig.learning_rate).minimize(loss)
+                    optimizer = tf.train.AdamOptimizer(NNConfig.learning_rate).minimize(loss)
                     # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 
                 # score model: linear activation
@@ -131,8 +131,7 @@ class NN:
 
         logger.info('running the session...')
         with tf.Session(graph=graph,config=tf.ConfigProto(log_device_placement=True)) as session:
-            session.run(tf.global_variables_initializer(), feed_dict={tf_valid_dataset_init: self.valid_dataset,
-                                                                      tf_test_dataset_init: self.test_dataset})
+            session.run(tf.global_variables_initializer())
             logger.info('Initialized')
             for step in range(NNConfig.num_steps):
                 offset = (step * NNConfig.batch_size) % (self.train_labels.shape[0] - NNConfig.batch_size)
@@ -156,15 +155,31 @@ class NN:
                     logger.info("Minibatch MSE: %.3f" % session.run(accuracy,
                                                                            feed_dict={pre: predictions, lbl: batch_labels}))
                     for i in range(0,5):
-                        logger.info("label value:", predictions[i], \
-                              "estimated value:", batch_labels[i])
+                        print("label value:", batch_labels[i], \
+                              "estimated value:", predictions[i])
                     # self.print_words(predictions, batch_labels)
-                    logger.info('Validation MSE:  %.3f' % session.run(accuracy,
-                                                                             feed_dict={pre: valid_prediction.eval(),
-                                                                                        lbl: self.valid_labels}))
-                    logger.info('Test MSE:  %.3f' % session.run(accuracy,
-                                                                       feed_dict={pre: test_prediction.eval(), lbl: self.test_labels}))
-            #self.print_words(test_prediction.eval(), self.test_labels)
+                    steps, valid_data_batches, valid_label_batches = NN.batchData(data=valid_prediction, labels = self.valid_labels)
+                    valid_mse = 0
+                    for step in range (0,steps):
+                        batch_mse = session.run(accuracy, feed_dict={tf_valid_dataset: valid_data_batches[step], pre: valid_prediction.eval(),
+                                               lbl: valid_label_batches[step]})
+                        valid_mse += batch_mse
+                    logger.info('Validation MSE: %.3f' %valid_mse)
+
+                    steps, test_data_batches, test_label_batches = NN.batchData(data=test_prediction,
+                                                                                  labels=self.test_labels)
+                    test_mse = 0
+                    for step in range(0, steps):
+                        batch_mse = session.run(accuracy, feed_dict={tf_test_dataset: test_data_batches[step],
+                                                                     pre: test_prediction.eval(),
+                                                                     lbl: test_label_batches[step]})
+                        test_mse += batch_mse
+                    logger.info('Test MSE: %.3f' % test_mse)
+
+
+
+
+
 
     def print_words(self, preds, labels):
         for pred, label in zip(preds, labels):

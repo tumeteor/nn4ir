@@ -9,7 +9,7 @@ from argparse import ArgumentParser
 
 from Util.dataloader import DataLoader
 from Util.configs import NNConfig, DataConfig
-
+from ranking.NN import NN
 
 import logging
 logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
@@ -22,7 +22,7 @@ logger.setLevel(logging.INFO)
 logger.addHandler(fileHandler)
 logger.addHandler(consoleHandler)
 
-class NN(object):
+class NN(NN):
 
     def __init__(self):
         self.d_loader = DataLoader()
