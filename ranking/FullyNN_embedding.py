@@ -161,7 +161,10 @@ class NN(NN):
                                                                                     batch_size=NNConfig.batch_size)
                     valid_mse = 0
                     for step in range (0,steps):
-                        batch_mse = session.run(accuracy, feed_dict={tf_valid_dataset: valid_data_batches[step], lbl: valid_label_batches[step]})
+                        batch_prediction = session.run(valid_prediction, feed_dict={tf_valid_dataset: valid_data_batches[step]})
+
+                        batch_mse = session.run(accuracy, feed_dict={pre: batch_prediction,
+                                                                     lbl: valid_label_batches[step]})
                         valid_mse += batch_mse
                     logger.info('Validation MSE: %.3f' %valid_mse)
 
@@ -170,9 +173,10 @@ class NN(NN):
                                                                                   batch_size=NNConfig.batch_size)
                     test_mse = 0
                     for step in range(0, steps):
-                        batch_mse = session.run(accuracy, feed_dict={tf_test_dataset: test_data_batches[step],
+                        batch_prediction = session.run(test_prediction, feed_dict={tf_test_dataset: test_data_batches[step],
                                                                      lbl: test_label_batches[step]})
-                        test_mse += batch_mse
+                        batch_mse = session.run(accuracy, feed_dict={pre: batch_prediction,
+                                                                     lbl: test_label_batches[step]})
                     logger.info('Test MSE: %.3f' % test_mse)
 
 
