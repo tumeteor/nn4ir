@@ -14,9 +14,9 @@ class NN:
         '''
         data_batches = []
         labels_batches = []
-        data_length = data.get_shape()[0].value
-        steps = data_length % batch_size
-        for step in steps:
+        data_length = len(data)
+        steps = int(data_length / batch_size)
+        for step in range(0, steps):
             offset = (step * batch_size) % (data_length - batch_size)
             batch_data = data[offset:(offset + batch_size), :]
             batch_labels = labels[offset:(offset + batch_size)]
