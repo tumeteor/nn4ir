@@ -1,5 +1,4 @@
 from abc import abstractmethod
-import tensorflow as tf
 class NN:
     @abstractmethod
     def simple_NN(self,mode):
@@ -15,7 +14,7 @@ class NN:
         '''
         data_batches = []
         labels_batches = []
-        data_length = tf.shape(data)[0]
+        data_length = data.get_shape()[0].value
         steps = data_length % batch_size
         for step in steps:
             offset = (step * batch_size) % (data_length - batch_size)

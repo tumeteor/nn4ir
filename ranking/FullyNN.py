@@ -1,6 +1,5 @@
 import numpy as np
 import tensorflow as tf
-import logging
 import sys
 import os
 import math

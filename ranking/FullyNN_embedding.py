@@ -2,7 +2,6 @@ import numpy as np
 import tensorflow as tf
 from Util.configs import NNConfig, DataConfig
 from Util.dataloader import DataLoader
-import logging
 from argparse import ArgumentParser
 from ranking.NN import NN
 import logging

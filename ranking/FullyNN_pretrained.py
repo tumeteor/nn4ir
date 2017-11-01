@@ -1,11 +1,8 @@
 import numpy as np
 import tensorflow as tf
-import logging
 import sys
 import os
-import math
 sys.path.insert(0, os.path.abspath('..'))
-import csv
 from argparse import ArgumentParser
 from ranking.NN import NN
 from Util.dataloader import DataLoader
