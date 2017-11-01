@@ -13,10 +13,10 @@ class NN:
         :param labels:
         :return:
         '''
-        steps = len(data) % batch_size
         data_batches = []
         labels_batches = []
         data_length = tf.shape(data)[0]
+        steps = data_length % batch_size
         for step in steps:
             offset = (step * batch_size) % (data_length - batch_size)
             batch_data = data[offset:(offset + batch_size), :]
