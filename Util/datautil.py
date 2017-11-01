@@ -585,6 +585,29 @@ class Utilities:
     @staticmethod
     def ranknorm():
         ranks = list(range(100,0,-1))
-        r_norms = [r/100 for r in ranks]
+        r_norms = [Utilities.transform_rank(r) for r in ranks]
         return r_norms
 
+    @staticmethod
+    def tranform_rank(r):
+        if r < 10:
+            r = 0
+        elif 10 <= r <= 20:
+            r_no = 0.1
+        elif 20 <= r <= 30:
+            r = 0.2
+        elif 30 <= r <= 40:
+            r = 0.3
+        elif 40 <= r <= 50:
+            r = 0.4
+        elif 50 <= r <= 60:
+            r = 0.5
+        elif 60 <= r <= 70:
+            r = 0.6
+        elif 70 <= r <= 80:
+            r = 0.7
+        elif 80 <= r <= 90:
+            r = 0.8
+        elif 90 <= r <= 100:
+            r = 0.9
+        return r
