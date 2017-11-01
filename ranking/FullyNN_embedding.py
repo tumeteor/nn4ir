@@ -157,7 +157,7 @@ class NN(NN):
                         print("label value:", batch_labels[i], \
                               "estimated value:", predictions[i])
                     # self.print_words(predictions, batch_labels)
-                    steps, valid_data_batches, valid_label_batches = self.batchData(data=valid_prediction, labels = self.valid_labels,
+                    steps, valid_data_batches, valid_label_batches = self.batchData(data=self.valid_dataset, labels = self.valid_labels,
                                                                                     batch_size=NNConfig.batch_size)
                     valid_mse = 0
                     for step in range (0,steps):
@@ -166,7 +166,7 @@ class NN(NN):
                         valid_mse += batch_mse
                     logger.info('Validation MSE: %.3f' %valid_mse)
 
-                    steps, test_data_batches, test_label_batches = self.batchData(data=test_prediction,
+                    steps, test_data_batches, test_label_batches = self.batchData(data=self.test_dataset,
                                                                                   labels=self.test_labels,
                                                                                   batch_size=NNConfig.batch_size)
                     test_mse = 0
