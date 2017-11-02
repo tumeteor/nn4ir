@@ -5,19 +5,23 @@ import numpy as np
 sys.path.insert(0, os.path.abspath('..'))
 import logging
 from Util.datautil import Retrieval_Data_Util, TextDataHandler, Utilities
-from Util.configs import DataConfig
-
+from Util.configs import NNConfig
+import yaml
+with open("configs.yml", 'r') as ymlfile:
+    cfg = yaml.load(ymlfile)
 
 class DataLoader(object):
     pretrained = False
     embedding = False
-    def __init__(self, pretrained=False, embedding = False):
+    def __init__(self, pretrained=False, embedding = False, qsize="1k"):
         logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                             datefmt='%d.%m.%Y %I:%M:%S %p', level=logging.INFO)
+        if qsize == "1k": self._data_config = cfg['DataConfig']
+        elif qsize == "10k": self._data_config = cfg['DataConfig10k']
         self.log = logging.getLogger("Data Loader")
-        self._d_handler = TextDataHandler(DataConfig.all_doc_path, DataConfig.save_dir_data)
-        if not pretrained: self._d_handler.truncate_vocab(DataConfig.vocab_size)
-        self._r_datautil = Retrieval_Data_Util(DataConfig.run_path, DataConfig.qrel_path, DataConfig.qtitle_path)
+        self._d_handler = TextDataHandler(['all_doc_path'], self._data_config['save_dir_data'])
+        if not pretrained: self._d_handler.truncate_vocab(self._data_config['vocab_size'])
+        self._r_datautil = Retrieval_Data_Util(self._data_config['run_path'], self._data_config['qrel_path'], self._data_config['qtitle_path'])
 
         self.pretrained = pretrained
         self.embedding = embedding
@@ -26,7 +30,7 @@ class DataLoader(object):
             '''
             Load pretrained embeddings
             '''
-            self.pretrain_vocab, self.embd = self.loadEmbedding(DataConfig.glove_file_path)
+            self.pretrain_vocab, self.embd = self.loadEmbedding(self._data_config['glove_file_path'])
 
     @property
     def d_handler(self):
@@ -62,14 +66,14 @@ class DataLoader(object):
         if self.pretrained:
             dataset, labels = self._d_handler.prepare_data_for_pretrained_embedding(dts, lbl, qid_title_dict=self._r_datautil.qid_title_dict)
             from tensorflow.contrib import learn
-            vocab_processor = learn.preprocessing.VocabularyProcessor(DataConfig.max_doc_size)
+            vocab_processor = learn.preprocessing.VocabularyProcessor(NNConfig.max_doc_size)
             # fit the vocab from glove
             pretrain = vocab_processor.fit(self.pretrain_vocab)
             return np.array(list(vocab_processor.transform(dataset))), labels
         elif self.embedding:
             return self.d_handler.prepare_data_for_embedding_with_old_vocab(dts, lbl,
                                                                             qid_title_dict=self._r_datautil.qid_title_dict,
-                                                                            length_max=DataConfig.max_doc_size)
+                                                                            length_max=NNConfig.max_doc_size)
 
 
         return self._d_handler.prepare_data(dts=dts, lbl=lbl,
@@ -77,11 +81,11 @@ class DataLoader(object):
 
     def get_ttv(self):
         if self.pretrained:
-            pickle_file = os.path.join(DataConfig.save_dir_data, 'robust_pre_vec.pkl')
+            pickle_file = os.path.join(self._data_config['save_dir_data'], 'robust_pre_vec.pkl')
         elif self.embedding:
-            pickle_file = os.path.join(DataConfig.save_dir_data, 'robust_emb_vec.pkl')
+            pickle_file = os.path.join(self._data_config['save_dir_data'], 'robust_emb_vec.pkl')
         else:
-            pickle_file = os.path.join(DataConfig.save_dir_data, 'robust_binary_vec.pkl')
+            pickle_file = os.path.join(self._data_config['save_dir_data'], 'robust_binary_vec.pkl')
 
         if os.path.exists(pickle_file):
             print('%s already present - Skipping pickling.' % pickle_file)
@@ -102,8 +106,8 @@ class DataLoader(object):
         else:
             dataset, labels = self.prepare_data()
             train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels = \
-                self.create_datasets(dataset, labels, DataConfig.train_ratio, DataConfig.valid_ratio,
-                                     DataConfig.test_ratio)
+                self.create_datasets(dataset, labels, NNConfig.train_ratio, NNConfig.valid_ratio,
+                                     NNConfig.test_ratio)
             try:
                 f = open(pickle_file, 'wb')
                 save = {

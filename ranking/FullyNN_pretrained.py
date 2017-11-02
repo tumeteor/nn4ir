@@ -6,7 +6,7 @@ sys.path.insert(0, os.path.abspath('..'))
 from argparse import ArgumentParser
 from ranking.NN import NN
 from Util.dataloader import DataLoader
-from Util.configs import NNConfig, DataConfig
+from Util.configs import NNConfig
 
 import logging
 logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
@@ -32,7 +32,7 @@ class NN(NN):
         with graph.as_default():
             with tf.device("/cpu:0"):
                 # Input data
-                tf_train_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, DataConfig.max_doc_size))
+                tf_train_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, NNConfig.max_doc_size))
                 tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, 1))
 
                 # Do not load data to constant!

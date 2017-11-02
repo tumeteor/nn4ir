@@ -1,6 +1,6 @@
 import numpy as np
 import tensorflow as tf
-from Util.configs import NNConfig, DataConfig
+from Util.configs import NNConfig
 from Util.dataloader import DataLoader
 from argparse import ArgumentParser
 from ranking.NN import NN
@@ -16,9 +16,9 @@ logger.addHandler(fileHandler)
 logger.addHandler(consoleHandler)
 
 class NN(NN):
-    def __init__(self):
-        self.d_loader = DataLoader(embedding=True)
-        self.input_vector_size = DataConfig.max_doc_size
+    def __init__(self, qsize="1k"):
+        self.d_loader = DataLoader(embedding=True, qsize=qsize)
+        self.input_vector_size = NNConfig.max_doc_size
         # output vector size = 1 for scoring model
         self.output_vector_size = 1
         self.train_dataset, self.train_labels, self.valid_dataset, \
@@ -185,8 +185,9 @@ class NN(NN):
 if __name__ == '__main__':
     parser = ArgumentParser(description='Required arguments')
     parser.add_argument('-m', '--mode', help='computation mode', required=False)
+    parser.add_argument('-s', '--query_size', help='number of queries for training', required=False)
     args = parser.parse_args()
-    nn = NN()
+    nn = NN() if args.query_size == None else NN(args.query_size)
     try:
         if args.mode == "gpu":
             nn.simple_NN(mode="/gpu:0")

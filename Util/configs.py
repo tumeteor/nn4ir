@@ -1,18 +1,9 @@
-class DataConfig():
-    all_doc_path = "/home/nguyen/nn4ir/data/docs1k/1rev/nn/"
-    save_dir_data = "/home/nguyen/nn4ir/data/docs1k/save/data"
-    save_dir_model = "/home/nguyen/nn4ir/data/docs1k/save/model"
-    qrel_path = "/home/nguyen/nn4ir/data/docs1k/top1k.qu.labels"
-    run_path = "/home/nguyen/nn4ir/data/docs1k/top1k.qu.labels"
-    qtitle_path = "/home/nguyen/nn4ir/data/docs1k/top1k.qtitles"
-    glove_file_path = "/home/nguyen/nn4ir/embeddings/de_wiki/de.bin"
+class NNConfig:
     vocab_size = 100000
     train_ratio = .7
     valid_ratio = .15
     test_ratio = .15
     max_doc_size = 2000
-
-class NNConfig():
     embedding_dim = 300
     summary_steps = 100
     num_hidden_nodes = 1024

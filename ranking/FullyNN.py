@@ -7,7 +7,7 @@ sys.path.insert(0, os.path.abspath('..'))
 from argparse import ArgumentParser
 
 from Util.dataloader import DataLoader
-from Util.configs import NNConfig, DataConfig
+from Util.configs import NNConfig
 from ranking.NN import NN
 
 import logging
@@ -52,10 +52,10 @@ class NN(NN):
                 tf_test_dataset_init = tf.placeholder(tf.float32, shape=self.test_dataset.shape)
                 tf_test_dataset = tf.Variable(tf_test_dataset_init)
 
-                if NNConfig.regularization:
+                if self.cfg['NNConfig']['regularization']:
                     beta_regu = tf.placeholder(tf.float32)
 
-                if NNConfig.learning_rate_decay:
+                if self.cfg['NNConfig']['learning_rate_decay']:
                     global_step = tf.Variable(0)
 
                 # Variables.
@@ -256,22 +256,6 @@ class NN(NN):
                                                                                         lbl: self.valid_labels}))
             logger.info('Test accuracy:  %.3f%%' % session.run(accuracy,
                                                                feed_dict={pre: test_prediction.eval(), lbl: self.test_labels}))
-            self.print_words(test_prediction.eval(), self.test_labels)
-
-
-    def print_words(self, preds, labels):
-        for pred, label in zip(preds,labels):
-            label_ids = self.d_loader.d_handler.get_ids_from_binary_vector(label)[0]
-            pred_ids = np.argsort(np.negative(pred))[:label_ids.size]
-            # pred_ids = np.argsort(pred)[(-(label_ids.size)):][::-1]
-            # print(label_ids)
-            # print(pred_ids)
-            print(self.d_loader.d_handler.id_list_to_word_list(label_ids),"-->" ,self.d_loader.d_handler.id_list_to_word_list(pred_ids))
-            # break
-
-    def get_words(self,vect):
-        ids = self.d_loader.d_handler.get_ids_from_binary_vector(vect)[0]
-        return self.d_loader.d_handler.id_list_to_word_list(ids)
 
 
 if __name__ == '__main__':
