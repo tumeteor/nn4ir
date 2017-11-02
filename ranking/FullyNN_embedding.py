@@ -113,9 +113,9 @@ class NN(NN):
                     # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 
                 # score model: linear activation
-                train_prediction = logits
-                valid_prediction = model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False)
-                test_prediction = model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False)
+                train_prediction = tf.nn.softmax(logits)
+                valid_prediction = tf.nn.softmax(model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False))
+                test_prediction = tf.nn.softmax(model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False))
 
                 '''
                 run accuracy scope
@@ -177,27 +177,9 @@ class NN(NN):
                                                                      lbl: test_label_batches[step]})
                         batch_mse = session.run(accuracy, feed_dict={pre: batch_prediction,
                                                                      lbl: test_label_batches[step]})
+                        test_mse += batch_mse
                     logger.info('Test MSE: %.3f' % test_mse)
 
-
-
-
-
-
-    def print_words(self, preds, labels):
-        for pred, label in zip(preds, labels):
-            label_ids = self.d_loader.d_handler.get_ids_from_binary_vector(label)[0]
-            pred_ids = np.argsort(np.negative(pred))[:label_ids.size]
-            # pred_ids = np.argsort(pred)[(-(label_ids.size)):][::-1]
-            # print(label_ids)
-            # print(pred_ids)
-            print(self.d_loader.d_handler.id_list_to_word_list(label_ids), "-->",
-                  self.d_loader.d_handler.id_list_to_word_list(pred_ids))
-            # break
-
-    def get_words(self, vect):
-        ids = self.d_loader.d_handler.get_ids_from_binary_vector(vect)[0]
-        return self.d_loader.d_handler.id_list_to_word_list(ids)
 
 
 if __name__ == '__main__':
