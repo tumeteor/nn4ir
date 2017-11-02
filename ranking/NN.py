@@ -25,3 +25,20 @@ class NN:
             labels_batches.append(batch_labels)
 
         return steps, data_batches, labels_batches
+
+
+
+    def print_words(self, preds, labels):
+        for pred, label in zip(preds, labels):
+            label_ids = self.d_loader.d_handler.get_ids_from_binary_vector(label)[0]
+            pred_ids = np.argsort(np.negative(pred))[:label_ids.size]
+            # pred_ids = np.argsort(pred)[(-(label_ids.size)):][::-1]
+            # print(label_ids)
+            # print(pred_ids)
+            print(self.d_loader.d_handler.id_list_to_word_list(label_ids), "-->",
+                  self.d_loader.d_handler.id_list_to_word_list(pred_ids))
+            # break
+
+    def get_words(self, vect):
+        ids = self.d_loader.d_handler.get_ids_from_binary_vector(vect)[0]
+        return self.d_loader.d_handler.id_list_to_word_list(ids)

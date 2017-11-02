@@ -589,11 +589,11 @@ class Utilities:
         return r_norms
 
     @staticmethod
-    def tranform_rank(r):
+    def transform_rank(r):
         if r < 10:
             r = 0
         elif 10 <= r <= 20:
-            r_no = 0.1
+            r = 0.1
         elif 20 <= r <= 30:
             r = 0.2
         elif 30 <= r <= 40:
