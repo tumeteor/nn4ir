@@ -8,10 +8,10 @@ DataConfig:
     glove_file_path : "/home/nguyen/nn4ir/embeddings/de_wiki/de.bin"
 
 DataConfig10k:
-    all_doc_path : "/home/nguyen/nn4ir/data/docs10k/1rev/nn/"
-    save_dir_data : "/home/nguyen/nn4ir/data/docs1k/save/data"
-    save_dir_model : "/home/nguyen/nn4ir/data/docs1k/save/model"
-    qrel_path : "/home/nguyen/nn4ir/data/docs1k/top1k.qu.labels"
-    run_path : "/home/nguyen/nn4ir/data/docs1k/top1k.qu.labels"
-    qtitle_path : "/home/nguyen/nn4ir/data/docs1k/top1k.qtitles"
+    all_doc_path : "/home/nguyen/nn4ir/data/docs10k/1rev/nn10k/"
+    save_dir_data : "/home/nguyen/nn4ir/data/docs10k/save/data"
+    save_dir_model : "/home/nguyen/nn4ir/data/docs10k/save/model"
+    qrel_path : "/home/nguyen/nn4ir/data/docs10k/top10k.qu.labels"
+    run_path : "/home/nguyen/nn4ir/data/docs10k/top10k.qu.labels"
+    qtitle_path : "/home/nguyen/nn4ir/data/docs10k/top10k.qtitles"
     glove_file_path : "/home/nguyen/nn4ir/embeddings/de_wiki/de.bin"

@@ -7,6 +7,7 @@ import logging
 from Util.datautil import Retrieval_Data_Util, TextDataHandler, Utilities
 from Util.configs import NNConfig
 import yaml
+import os
 with open(os.path.join(os.path.dirname(__file__),"Utils/configs.yaml")) as ymlfile:
     cfg = yaml.load(ymlfile)
 
@@ -17,7 +18,9 @@ class DataLoader(object):
         logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                             datefmt='%d.%m.%Y %I:%M:%S %p', level=logging.INFO)
         if qsize == "1k": self._data_config = cfg['DataConfig']
-        elif qsize == "10k": self._data_config = cfg['DataConfig10k']
+        elif qsize == "10k":
+            self._data_config = cfg['DataConfig10k']
+            print("using 10k queryset")
         self.log = logging.getLogger("Data Loader")
         self._d_handler = TextDataHandler(self._data_config['all_doc_path'], self._data_config['save_dir_data'])
         if not pretrained: self._d_handler.truncate_vocab(NNConfig.vocab_size)
