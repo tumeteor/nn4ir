@@ -168,12 +168,18 @@ class NN(NN):
 if __name__ == '__main__':
     parser = ArgumentParser(description='Required arguments')
     parser.add_argument('-m', '--mode', help='computation mode', required=False)
+    parser.add_argument('-s', '--query_size', help='number of queries for training', required=False)
+    parser.add_argument('-l', '--loss', help='loss function [point-wise, pair-wise]', required=False)
     args = parser.parse_args()
-    nn = NN()
+    nn = NN() if args.query_size is None else NN(args.query_size)
     try:
-        if args.mode == "gpu":
-            nn.simple_NN(mode="/gpu:0")
-        else: nn.simple_NN()
+        if args.mode == "gpu": nn.mode = "/gpu:0"
+        else: nn.mode = "/cpu:0"
+        if args.loss == "point-wise" or args.loss == "pair-wise":
+            logger.info("learn with pair-wise loss")
+            nn.lf = args.loss
+        else: nn.lf == "point-wise"
+        nn.simple_NN()
         logger.info("done..")
     except Exception as e:
         logger.exception(e)
