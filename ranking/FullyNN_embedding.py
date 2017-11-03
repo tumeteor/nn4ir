@@ -197,7 +197,9 @@ if __name__ == '__main__':
     try:
         if args.mode == "gpu": nn.mode = "/gpu:0"
         else: nn.mode = "/cpu:0"
-        if args.loss == "point-wise" or args.loss == "pair-wise": nn.lf = args.loss
+        if args.loss == "point-wise" or args.loss == "pair-wise":
+            logger.info("learn with pair-wise loss")
+            nn.lf = args.loss
         else: nn.lf == "point-wise"
         logger.info("done..")
     except Exception as e:
