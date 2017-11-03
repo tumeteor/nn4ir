@@ -27,13 +27,15 @@ class NN(NN):
         self.embedded_train_expanded = None
         self.embedded_valid_expanded = None
         self.embedded_test_expanded = None
+        self.mode = None
+        self.lf = None
 
 
-    def simple_NN(self, mode="/cpu:0"):
+    def simple_NN(self):
         logger.info("creating the computational graph...")
         graph = tf.Graph()
         with graph.as_default():
-            with tf.device(mode):
+            with tf.device(self.mode):
                 # Input data
                 tf_train_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
                 tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
@@ -98,8 +100,11 @@ class NN(NN):
 
                 logger.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_expanded)))
                 logits = model(self.embedded_train_expanded, w_h, b_h, w_o, b_o, True)
-                loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) /  \
-                       (2 * NNConfig.batch_size)
+                loss = tf.losses.mean_squared_error(labels=tf_train_labels,
+                                                    predictions=logits)  if self.lf == "point-wise" else tf.losses.mean_pairwise_squared_error(
+                    labels= tf_train_labels, predictions=logits)
+
+                # loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * NNConfig.batch_size)
                 #loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
                 # tf.nn.sigmoid_cross_entropy_with_logits instead of tf.nn.softmax_cross_entropy_with_logits for multi-label case
                 if NNConfig.regularization:
@@ -113,9 +118,9 @@ class NN(NN):
                     # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 
                 # score model: linear activation
-                train_prediction = tf.nn.softmax(logits)
-                valid_prediction = tf.nn.softmax(model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False))
-                test_prediction = tf.nn.softmax(model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False))
+                train_prediction = tf.nn.softmax(logits,dim=0)
+                valid_prediction = tf.nn.softmax(model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False),dim=0)
+                test_prediction = tf.nn.softmax(model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False),dim=0)
 
                 '''
                 run accuracy scope
@@ -186,12 +191,14 @@ if __name__ == '__main__':
     parser = ArgumentParser(description='Required arguments')
     parser.add_argument('-m', '--mode', help='computation mode', required=False)
     parser.add_argument('-s', '--query_size', help='number of queries for training', required=False)
+    parser.add_argument('-l', '--loss', help='loss function [point-wise, pair-wise]', required=False)
     args = parser.parse_args()
-    nn = NN() if args.query_size == None else NN(args.query_size)
+    nn = NN() if args.query_size is None else NN(args.query_size)
     try:
-        if args.mode == "gpu":
-            nn.simple_NN(mode="/gpu:0")
-        else: nn.simple_NN()
+        if args.mode == "gpu": nn.mode = "/gpu:0"
+        else: nn.mode = "/cpu:0"
+        if args.loss == "point-wise" or args.loss == "pair-wise": nn.lf = args.loss
+        else: nn.lf == "point-wise"
         logger.info("done..")
     except Exception as e:
         logger.exception(e)

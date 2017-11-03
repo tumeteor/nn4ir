@@ -19,8 +19,8 @@ class DataLoader(object):
         if qsize == "1k": self._data_config = cfg['DataConfig']
         elif qsize == "10k": self._data_config = cfg['DataConfig10k']
         self.log = logging.getLogger("Data Loader")
-        self._d_handler = TextDataHandler(['all_doc_path'], self._data_config['save_dir_data'])
-        if not pretrained: self._d_handler.truncate_vocab(self._data_config['vocab_size'])
+        self._d_handler = TextDataHandler(self._data_config['all_doc_path'], self._data_config['save_dir_data'])
+        if not pretrained: self._d_handler.truncate_vocab(NNConfig.vocab_size)
         self._r_datautil = Retrieval_Data_Util(self._data_config['run_path'], self._data_config['qrel_path'], self._data_config['qtitle_path'])
 
         self.pretrained = pretrained

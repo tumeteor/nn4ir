@@ -1,5 +1,10 @@
 from abc import abstractmethod
+import numpy as np
+
+
 class NN:
+    def __init__(self): pass
+
     @abstractmethod
     def simple_NN(self,mode):
         pass
