@@ -7,7 +7,7 @@ import logging
 from Util.datautil import Retrieval_Data_Util, TextDataHandler, Utilities
 from Util.configs import NNConfig
 import yaml
-with open("Utils/configs.yaml", 'r') as ymlfile:
+with open(os.path.join(os.path.dirname(__file__),"Utils/configs.yaml")) as ymlfile:
     cfg = yaml.load(ymlfile)
 
 class DataLoader(object):

@@ -201,6 +201,7 @@ if __name__ == '__main__':
             logger.info("learn with pair-wise loss")
             nn.lf = args.loss
         else: nn.lf == "point-wise"
+        nn.simple_NN()
         logger.info("done..")
     except Exception as e:
         logger.exception(e)
