@@ -6,7 +6,6 @@ DataConfig:
     run_path : "/home/nguyen/nn4ir/data/docs1k/top1k.qu.labels"
     qtitle_path : "/home/nguyen/nn4ir/data/docs1k/top1k.qtitles"
     glove_file_path : "/home/nguyen/nn4ir/embeddings/de_wiki/de.bin"
-
 DataConfig10k:
     all_doc_path : "/home/nguyen/nn4ir/data/docs10k/1rev/nn10k/"
     save_dir_data : "/home/nguyen/nn4ir/data/docs10k/save/data"
@@ -14,4 +13,12 @@ DataConfig10k:
     qrel_path : "/home/nguyen/nn4ir/data/docs10k/top10k.qu.labels"
     run_path : "/home/nguyen/nn4ir/data/docs10k/top10k.qu.labels"
     qtitle_path : "/home/nguyen/nn4ir/data/docs10k/top10k.qtitles"
+    glove_file_path : "/home/nguyen/nn4ir/embeddings/de_wiki/de.bin"
+DataConfig100k:
+    all_doc_path : "/home/nguyen/nn4ir/data/docs100k/1rev/nn100k/"
+    save_dir_data : "/home/nguyen/nn4ir/data/docs100k/save/data"
+    save_dir_model : "/home/nguyen/nn4ir/data/docs100k/save/model"
+    qrel_path : "/home/nguyen/nn4ir/data/docs100k/top100k.qu.labels"
+    run_path : "/home/nguyen/nn4ir/data/docs100k/top100k.qu.labels"
+    qtitle_path : "/home/nguyen/nn4ir/data/docs100k/top100k.qtitles"
     glove_file_path : "/home/nguyen/nn4ir/embeddings/de_wiki/de.bin"

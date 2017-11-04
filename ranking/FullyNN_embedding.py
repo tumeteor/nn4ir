@@ -118,9 +118,9 @@ class NN(NN):
                     # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 
                 # score model: linear activation
-                train_prediction = tf.nn.softmax(logits,dim=0)
-                valid_prediction = tf.nn.softmax(model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False),dim=0)
-                test_prediction = tf.nn.softmax(model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False),dim=0)
+                train_prediction = tf.nn.sigmoid(logits)
+                valid_prediction = tf.nn.sigmoid(model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False))
+                test_prediction = tf.nn.sigmoid(model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False))
 
                 '''
                 run accuracy scope
@@ -193,7 +193,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--query_size', help='number of queries for training', required=False)
     parser.add_argument('-l', '--loss', help='loss function [point-wise, pair-wise]', required=False)
     args = parser.parse_args()
-    nn = NN() if args.query_size is None else NN(args.query_size)
+    nn = NN() if args.query_size is None else NN(qsize=args.query_size)
     try:
         if args.mode == "gpu": nn.mode = "/gpu:0"
         else: nn.mode = "/cpu:0"
