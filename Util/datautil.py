@@ -516,6 +516,9 @@ class Retrieval_Data_Util:
             for row in csv_reader:
             #for utf8_row in csv_reader:
                 #row = [x.decode('utf8') for x in utf8_row]
+                if len(row) <= 1:
+                    print(row)
+                    continue
                 if int(row[1]) <= top_k:
                     # urls in Bing is not normalized yet
                     d.append(surt(row[4]))
