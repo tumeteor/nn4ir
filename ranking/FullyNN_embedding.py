@@ -90,15 +90,24 @@ class NN(NN):
                 # Training computation
                 def model(dataset, w_h, b_h, w_o, b_o, train):
                     if NNConfig.dropout and train:
-                        drop_i = tf.nn.dropout(dataset, NNConfig.dropout_keep_prob_input)
-                        h_lay_train = tf.nn.relu(tf.matmul(drop_i, w_h) + b_h)
-                        drop_h = tf.nn.dropout(h_lay_train, NNConfig.dropout_keep_prob_hidden)
+                        drop_h = dataset
+                        for i in range(0, NNConfig.num_hidden_layers):
+                            drop_i = tf.nn.dropout(drop_h, NNConfig.dropout_keep_prob_input)
+                            h_lay_train = tf.nn.relu(tf.matmul(drop_i, w_h) + b_h)
+                            drop_h = tf.nn.dropout(h_lay_train, NNConfig.dropout_keep_prob_hidden)
+
                         return tf.matmul(drop_h, w_o) + b_o
                     else:
-                        h_lay_train = tf.nn.relu(tf.matmul(dataset, w_h) + b_h)  # or tf.nn.sigmoid
+                        h_lay_train = dataset
+                        for i in range(0, NNConfig.num_hidden_layers):
+                            h_lay_train = tf.nn.relu(tf.matmul(h_lay_train, w_h) + b_h)  # or tf.nn.sigmoid
+
                         return tf.matmul(h_lay_train, w_o) + b_o
 
+
                 logger.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_expanded)))
+
+
                 logits = model(self.embedded_train_expanded, w_h, b_h, w_o, b_o, True)
                 loss = tf.losses.mean_squared_error(labels=tf_train_labels,
                                                     predictions=logits)  if self.lf == "point-wise" else tf.losses.mean_pairwise_squared_error(
