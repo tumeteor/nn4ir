@@ -7,6 +7,7 @@ class NNConfig:
     embedding_dim = 300
     summary_steps = 100
     num_hidden_nodes = 1024
+    num_hidden_layers = 3
     batch_size = 100
     num_steps = 800
     beta_regu = 1e-3
