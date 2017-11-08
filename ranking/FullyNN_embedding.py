@@ -93,6 +93,9 @@ class NN(NN):
                         drop_h = dataset
                         for i in range(0, NNConfig.num_hidden_layers):
                             drop_i = tf.nn.dropout(drop_h, NNConfig.dropout_keep_prob_input)
+                            w_h = init_weights([drop_h[0], NNConfig.num_hidden_nodes])
+                            b_h = init_biases([NNConfig.num_hidden_nodes])
+
                             h_lay_train = tf.nn.relu(tf.matmul(drop_i, w_h) + b_h)
                             drop_h = tf.nn.dropout(h_lay_train, NNConfig.dropout_keep_prob_hidden)
 
@@ -100,6 +103,8 @@ class NN(NN):
                     else:
                         h_lay_train = dataset
                         for i in range(0, NNConfig.num_hidden_layers):
+                            w_h = init_weights([h_lay_train[0], NNConfig.num_hidden_nodes])
+                            b_h = init_biases([NNConfig.num_hidden_nodes])
                             h_lay_train = tf.nn.relu(tf.matmul(h_lay_train, w_h) + b_h)  # or tf.nn.sigmoid
 
                         return tf.matmul(h_lay_train, w_o) + b_o
