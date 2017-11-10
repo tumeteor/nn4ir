@@ -115,8 +115,9 @@ class NN(NN):
 
                 logits = model(self.embedded_train_expanded, w_h, b_h, w_o, b_o, True)
                 loss = tf.losses.mean_squared_error(labels=tf_train_labels,
-                                                    predictions=logits)  if self.lf == "point-wise" else tf.losses.mean_pairwise_squared_error(
-                    labels= tf_train_labels, predictions=logits)
+                                                    predictions=tf.nn.sigmoid(logits))  \
+                    if self.lf == "point-wise" else tf.losses.mean_pairwise_squared_error(
+                    labels= tf_train_labels, predictions=tf.nn.sigmoid(logits))
 
                 # loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * NNConfig.batch_size)
                 #loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
@@ -132,9 +133,9 @@ class NN(NN):
                     # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 
                 # score model: linear activation
-                train_prediction = tf.nn.softmax(logits)
-                valid_prediction = tf.nn.softmax(model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False))
-                test_prediction = tf.nn.softmax(model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False))
+                train_prediction = tf.nn.sigmoid(logits)
+                valid_prediction = tf.nn.sigmoid(model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False))
+                test_prediction = tf.nn.sigmoid(model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False))
 
                 '''
                 run accuracy scope
