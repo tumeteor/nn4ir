@@ -97,7 +97,7 @@ class DataLoader(object):
             if self.twolabels:
                 pickle_file = os.path.join(self._data_config['save_dir_data'], 'robust_emb_tmp.pkl')
             else:
-                pickle = os.path.join(self._data_config['save_dir_data'], 'robust_emb_vec.pkl')
+                pickle_file = os.path.join(self._data_config['save_dir_data'], 'robust_emb_vec.pkl')
         else:
             pickle_file = os.path.join(self._data_config['save_dir_data'], 'robust_binary_vec.pkl')
 
