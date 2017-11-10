@@ -538,6 +538,8 @@ class Retrieval_Data_Util:
 
 class Utilities:
 
+    twolabels = True
+
     @staticmethod
     def shufflize(data, label):
         assert len(data) == len(label)
@@ -588,7 +590,9 @@ class Utilities:
     @staticmethod
     def ranknorm():
         ranks = list(range(100,0,-1))
-        r_norms = [Utilities.transform_rank(r) for r in ranks]
+        # r_norms = [Utilities.transform_rank(r) for r in ranks] if not Utilities.twolabels \
+        #     else [Utilities.transform_bin_rank(r) for r in ranks]
+        r_norms = Utilities.softmax(ranks)
         return r_norms
 
     @staticmethod
@@ -614,3 +618,16 @@ class Utilities:
         elif 90 <= r <= 100:
             r = 0.9
         return r
+
+    @staticmethod
+    def tranform_binary_rank(r):
+        if r < 50:
+            r = 0
+        else:
+            r = 1
+
+    @staticmethod
+    def softmax(w, t=1.0):
+        e = np.exp(np.array(w) / t)
+        dist = e / np.sum(e)
+        return dist

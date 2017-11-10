@@ -1,4 +1,3 @@
-import six.moves.cPickle as pickle
 import sys
 import os
 import numpy as np
@@ -14,6 +13,7 @@ with open(os.path.join(os.path.dirname(__file__),"configs.yaml")) as ymlfile:
 class DataLoader(object):
     pretrained = False
     embedding = False
+    twolabels = Utilities.twolabels
     def __init__(self, pretrained=False, embedding = False, qsize="1k"):
         logging.basicConfig(format='%(asctime)s %(levelname)s: %(message)s',
                             datefmt='%d.%m.%Y %I:%M:%S %p', level=logging.INFO)
@@ -94,7 +94,10 @@ class DataLoader(object):
         if self.pretrained:
             pickle_file = os.path.join(self._data_config['save_dir_data'], 'robust_pre_vec.pkl')
         elif self.embedding:
-            pickle_file = os.path.join(self._data_config['save_dir_data'], 'robust_emb_vec.pkl')
+            if self.twolabels:
+                pickle_file = os.path.join(self._data_config['save_dir_data'], 'robust_emb_tmp.pkl')
+            else:
+                pickle = os.path.join(self._data_config['save_dir_data'], 'robust_emb_vec.pkl')
         else:
             pickle_file = os.path.join(self._data_config['save_dir_data'], 'robust_binary_vec.pkl')
 
