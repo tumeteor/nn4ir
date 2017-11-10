@@ -1,4 +1,3 @@
-import numpy as np
 import tensorflow as tf
 from Util.configs import NNConfig
 from Util.dataloader import DataLoader
@@ -85,6 +84,7 @@ class NN(NN):
 
                     embedded_test = tf.nn.embedding_lookup(self.W, tf_test_dataset)
                     self.embedded_test_expanded = tf.reduce_sum(embedded_test, [1])
+
 
 
                 # Training computation
