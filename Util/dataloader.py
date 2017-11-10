@@ -1,4 +1,5 @@
 import sys
+import six.moves.cPickle as pickle
 import os
 import numpy as np
 sys.path.insert(0, os.path.abspath('..'))
