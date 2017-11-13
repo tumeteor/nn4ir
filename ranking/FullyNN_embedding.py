@@ -108,9 +108,9 @@ class NN(NN):
 
                 logits = model(self.embedded_train_expanded, w_h, b_h, w_o, b_o, True)
                 loss = tf.losses.mean_squared_error(labels=tf_train_labels,
-                                                    predictions=tf.nn.softmax(logits)) \
+                                                    predictions=logits) \
                     if self.lf == "point-wise" else tf.losses.mean_pairwise_squared_error(
-                    labels=tf_train_labels, predictions=tf.nn.softmax(logits))
+                    labels=tf_train_labels, predictions=logits)
 
                 # loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * NNConfig.batch_size)
                 # loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
@@ -127,9 +127,9 @@ class NN(NN):
                     # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 
                 # score model: linear activation
-                train_prediction = tf.nn.softmax(logits)
-                valid_prediction = tf.nn.softmax(model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False))
-                test_prediction = tf.nn.softmax(model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False))
+                train_prediction = logits
+                valid_prediction = model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False)
+                test_prediction = model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False)
 
                 '''
                 run accuracy scope
@@ -142,61 +142,7 @@ class NN(NN):
 
                     # accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
 
-            logger.info('running the session...')
-            with tf.Session(graph=graph, config=tf.ConfigProto(log_device_placement=True)) as session:
-                session.run(tf.global_variables_initializer())
-                logger.info('Initialized')
-                for step in range(NNConfig.num_steps):
-                    offset = (step * NNConfig.batch_size) % (self.train_labels.shape[0] - NNConfig.batch_size)
-                    batch_data = self.train_dataset[offset:(offset + NNConfig.batch_size), :]
-                    batch_labels = self.train_labels[offset:(offset + NNConfig.batch_size)]
-                    batch_labels = batch_labels.reshape(len(batch_labels), 1)
 
-                    # print('-' * 80)
-                    # for vec in batch_labels:
-                    #   print('.' * 200)
-                    #   print(self.get_words(vec))
-
-                    feed_dict = {tf_train_dataset: batch_data, tf_train_labels: batch_labels}
-                    if NNConfig.regularization:
-                        feed_dict[beta_regu] = NNConfig.beta_regu
-                    logger.debug('start optimizing')
-                    _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
-                    logger.debug('optimizing finished')
-                    if (step % NNConfig.summary_steps == 0):
-                        logger.info("Minibatch loss at step %d: %f" % (step, l))
-                        logger.info("Minibatch MSE: %.3f" % session.run(accuracy,
-                                                                        feed_dict={pre: predictions,
-                                                                                   lbl: batch_labels}))
-                        for i in range(0, 5):
-                            print("label value:", batch_labels[i], \
-                                  "estimated value:", predictions[i])
-                        # self.print_words(predictions, batch_labels)
-                        steps, valid_data_batches, valid_label_batches = self.batchData(data=self.valid_dataset,
-                                                                                        labels=self.valid_labels,
-                                                                                        batch_size=NNConfig.batch_size)
-                        valid_mse = 0
-                        for step in range(0, steps):
-                            batch_prediction = session.run(valid_prediction,
-                                                           feed_dict={tf_valid_dataset: valid_data_batches[step]})
-
-                            batch_mse = session.run(accuracy, feed_dict={pre: batch_prediction,
-                                                                         lbl: valid_label_batches[step]})
-                            valid_mse += batch_mse
-                        logger.info('Validation MSE: %.3f' % valid_mse)
-
-                        steps, test_data_batches, test_label_batches = self.batchData(data=self.test_dataset,
-                                                                                      labels=self.test_labels,
-                                                                                      batch_size=NNConfig.batch_size)
-                        test_mse = 0
-                        for step in range(0, steps):
-                            batch_prediction = session.run(test_prediction,
-                                                           feed_dict={tf_test_dataset: test_data_batches[step],
-                                                                      lbl: test_label_batches[step]})
-                            batch_mse = session.run(accuracy, feed_dict={pre: batch_prediction,
-                                                                         lbl: test_label_batches[step]})
-                            test_mse += batch_mse
-                        logger.info('Test MSE: %.3f' % test_mse)
 
     def simple_NN(self):
         logger.info("creating the computational graph...")
@@ -283,9 +229,9 @@ class NN(NN):
 
                 logits = model(self.embedded_train_expanded, w_h, b_h, w_o, b_o, True)
                 loss = tf.losses.mean_squared_error(labels=tf_train_labels,
-                                                    predictions=tf.nn.softmax(logits))  \
+                                                    predictions=logits)  \
                     if self.lf == "point-wise" else tf.losses.mean_pairwise_squared_error(
-                    labels= tf_train_labels, predictions=tf.nn.softmax(logits))
+                    labels= tf_train_labels, predictions=logits)
 
                 # loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * NNConfig.batch_size)
                 #loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
@@ -301,9 +247,9 @@ class NN(NN):
                     # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 
                 # score model: linear activation
-                train_prediction = tf.nn.softmax(logits)
-                valid_prediction = tf.nn.softmax(model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False))
-                test_prediction = tf.nn.softmax(model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False))
+                train_prediction = logits
+                valid_prediction = model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False)
+                test_prediction = model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False)
 
                 '''
                 run accuracy scope

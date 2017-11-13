@@ -538,7 +538,7 @@ class Retrieval_Data_Util:
 
 class Utilities:
 
-    twolabels = True
+    twolabels = False
 
     @staticmethod
     def shufflize(data, label):
@@ -615,9 +615,9 @@ class Utilities:
     @staticmethod
     def ranknorm():
         ranks = list(range(100,0,-1))
-        #r_norms = [Utilities.transform_rank(r) for r in ranks] if not Utilities.twolabels \
-        #    else Utilities.softmax(ranks)
-        r_norms = Utilities.softmax(ranks)
+        r_norms = [Utilities.transform_rank(r) for r in ranks] if not Utilities.twolabels \
+            else [Utilities.transform_bin_rank(r) for r in ranks]
+            # else Utilities.softmax(ranks)
 
         return r_norms
 
