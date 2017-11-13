@@ -228,12 +228,8 @@ class NN(NN):
 
 
                 logits = model(self.embedded_train_expanded, w_h, b_h, w_o, b_o, True)
-                loss = tf.losses.mean_squared_error(labels=tf_train_labels,
-                                                    predictions=logits)  \
-                    if self.lf == "point-wise" else tf.losses.mean_pairwise_squared_error(
-                    labels= tf_train_labels, predictions=logits)
+                loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * NNConfig.batch_size)
 
-                # loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * NNConfig.batch_size)
                 #loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
                 # tf.nn.sigmoid_cross_entropy_with_logits instead of tf.nn.softmax_cross_entropy_with_logits for multi-label case
                 if NNConfig.regularization:

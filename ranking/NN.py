@@ -1,5 +1,6 @@
 from abc import abstractmethod
 import numpy as np
+import itertools
 
 
 class NN:
@@ -47,3 +48,28 @@ class NN:
     def get_words(self, vect):
         ids = self.d_loader.d_handler.get_ids_from_binary_vector(vect)[0]
         return self.d_loader.d_handler.id_list_to_word_list(ids)
+
+    @staticmethod
+    def transform_pairwise(data, labels):
+        """Transforms data into pairs with balanced labels for ranking"""
+
+        assert len(data) == len(labels)
+        data_left = []
+        data_right = []
+        label_new = []
+        comb = itertools.combinations(len(data), 2)
+        for k, (i, j) in enumerate(comb):
+            if labels[i, 1] == labels[j, 1] or labels[i, 0] == labels[j, 0]:
+                # skip same doc or different query
+                continue
+
+                data_left.append(data[i])
+                data_right.append(data[j])
+                labels.append(labels[i, 1] - labels[j, 1])
+
+        return data_left, data_right, labels
+
+
+
+
+

@@ -13,6 +13,7 @@ import six.moves.cPickle as pickle
 import logging
 from surt import surt
 import csv
+import itertools
 
 # for long CSV
 maxInt = sys.maxsize
@@ -548,30 +549,6 @@ class Utilities:
 
 
     @staticmethod
-    def pair_gen(self, data, label):
-        assert len(data) == len(label)
-        perm = np.random.permutation(len(data))
-        data2 = data[perm]
-        label2 = label[perm]
-
-        pair_label = []
-        filtered = []
-        for i in range(0, len(label)):
-            if label[i] < label2[i]:
-                pair_label.append(0)
-            elif label[i] > label2[i]:
-                pair_label.append(1)
-            else:
-                filtered.append(i)
-                continue
-        data = np.delete(data, filtered)
-        data2 = np.delete(data2, filtered)
-        assert len(data) == len(pair_label)
-
-        return data, data2, pair_label
-
-
-    @staticmethod
     def recursive_glob(treeroot, pattern):
         results = []
         for base, dirs, files in os.walk(treeroot):
@@ -651,9 +628,20 @@ class Utilities:
             r = 0
         else:
             r = 1
+        return r
 
     @staticmethod
     def softmax(w, t=1.0):
         e = np.exp(np.array(w) / t)
         dist = e / np.sum(e)
         return dist
+
+
+
+
+
+
+
+
+
+
