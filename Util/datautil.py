@@ -617,7 +617,7 @@ class Utilities:
         ranks = list(range(100,0,-1))
         #r_norms = [Utilities.transform_rank(r) for r in ranks] if not Utilities.twolabels \
         #    else Utilities.softmax(ranks)
-        r_norms = [Utilities.transform_bin_rank(r) for r in ranks]
+        r_norms = Utilities.softmax(ranks)
 
         return r_norms
 
