@@ -30,6 +30,174 @@ class NN(NN):
         self.lf = None
 
 
+    def simple_NN_pairwise(self):
+        logger.info("creating the computational graph...")
+        graph = tf.Graph()
+        with graph.as_default():
+            with tf.device(self.mode):
+                # Input data
+                tf_train_left = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
+                tf_train_right = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
+                tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
+
+                tf_valid_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
+
+                tf_test_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
+
+                if NNConfig.regularization:
+                    beta_regu = tf.placeholder(tf.float32)
+
+                if NNConfig.learning_rate_decay:
+                    global_step = tf.Variable(0)
+
+                # Variables.
+                def init_weights(shape):
+                    # return tf.Variable(tf.random_normal(shape, stddev=0.01))
+                    return tf.Variable(tf.truncated_normal(shape))
+
+                def init_biases(shape):
+                    return tf.Variable(tf.zeros(shape))
+
+                w_h = init_weights([NNConfig.embedding_dim, NNConfig.num_hidden_nodes])
+                b_h = init_biases([NNConfig.num_hidden_nodes])
+
+                w_o = init_weights([NNConfig.num_hidden_nodes, self.output_vector_size])
+                b_o = init_biases([self.output_vector_size])
+
+                # Embedding layer
+                with tf.device('/cpu:0'), tf.name_scope("embedding"):
+                    self.W = tf.Variable(
+                        tf.random_uniform([self.d_loader.d_handler.get_vocab_size(), NNConfig.embedding_dim], -1.0,
+                                          1.0),
+                        name="W")
+                    embedded_left = tf.nn.embedding_lookup(self.W, tf_train_left)
+                    self.embedded_left_expanded = tf.reduce_sum(embedded_left, [1])
+
+                    embedded_right = tf.nn.embedding_lookup(self.W, tf_train_right)
+                    self.embedded_right_expanded = tf.reduce_sum(embedded_right, [1])
+
+                    embedded_valid = tf.nn.embedding_lookup(self.W, tf_valid_dataset)
+                    self.embedded_valid_expanded = tf.reduce_sum(embedded_valid, [1])
+
+                    embedded_test = tf.nn.embedding_lookup(self.W, tf_test_dataset)
+                    self.embedded_test_expanded = tf.reduce_sum(embedded_test, [1])
+
+                # Training computation
+                def model(dataset, w_h, b_h, w_o, b_o, train):
+                    if NNConfig.dropout and train:
+                        drop_h = dataset
+                        for i in range(0, NNConfig.num_hidden_layers):
+                            drop_i = tf.nn.dropout(drop_h, NNConfig.dropout_keep_prob_input)
+                            w_h = init_weights([drop_h.shape.as_list()[1], NNConfig.num_hidden_nodes])
+                            b_h = init_biases([NNConfig.num_hidden_nodes])
+
+                            h_lay_train = tf.nn.relu(tf.matmul(drop_i, w_h) + b_h)
+                            drop_h = tf.nn.dropout(h_lay_train, NNConfig.dropout_keep_prob_hidden)
+
+                        return tf.matmul(drop_h, w_o) + b_o
+                    else:
+                        h_lay_train = dataset
+                        for i in range(0, NNConfig.num_hidden_layers):
+                            w_h = init_weights([h_lay_train.shape.as_list()[1], NNConfig.num_hidden_nodes])
+                            b_h = init_biases([NNConfig.num_hidden_nodes])
+                            h_lay_train = tf.nn.relu(tf.matmul(h_lay_train, w_h) + b_h)  # or tf.nn.sigmoid
+
+                        return tf.matmul(h_lay_train, w_o) + b_o
+
+                logger.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_expanded)))
+
+                logits = model(self.embedded_train_expanded, w_h, b_h, w_o, b_o, True)
+                loss = tf.losses.mean_squared_error(labels=tf_train_labels,
+                                                    predictions=tf.nn.sigmoid(logits)) \
+                    if self.lf == "point-wise" else tf.losses.mean_pairwise_squared_error(
+                    labels=tf_train_labels, predictions=tf.nn.sigmoid(logits))
+
+                # loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * NNConfig.batch_size)
+                # loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
+                # tf.nn.sigmoid_cross_entropy_with_logits instead of tf.nn.softmax_cross_entropy_with_logits for multi-label case
+                if NNConfig.regularization:
+                    loss += beta_regu * (tf.nn.l2_loss(w_h) + tf.nn.l2_loss(w_o))
+                if NNConfig.learning_rate_decay:
+                    learning_rate = tf.train.exponential_decay(NNConfig.learning_rate, global_step,
+                                                               NNConfig.decay_steps, NNConfig.decay_rate,
+                                                               staircase=True)
+                    optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step=global_step)
+                else:
+                    optimizer = tf.train.AdamOptimizer(NNConfig.learning_rate).minimize(loss)
+                    # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
+
+                # score model: linear activation
+                train_prediction = tf.nn.sigmoid(logits)
+                valid_prediction = tf.nn.sigmoid(model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False))
+                test_prediction = tf.nn.sigmoid(model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False))
+
+                '''
+                run accuracy scope
+                '''
+                with tf.name_scope('accuracy'):
+                    pre = tf.placeholder("float", shape=[None, self.output_vector_size])
+                    lbl = tf.placeholder("float", shape=[None, self.output_vector_size])
+                    # compute the mean of all predictions
+                    accuracy = tf.reduce_sum(tf.pow(pre - lbl, 2)) / (2 * tf.cast(tf.shape(lbl)[0], tf.float32))
+
+                    # accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
+
+            logger.info('running the session...')
+            with tf.Session(graph=graph, config=tf.ConfigProto(log_device_placement=True)) as session:
+                session.run(tf.global_variables_initializer())
+                logger.info('Initialized')
+                for step in range(NNConfig.num_steps):
+                    offset = (step * NNConfig.batch_size) % (self.train_labels.shape[0] - NNConfig.batch_size)
+                    batch_data = self.train_dataset[offset:(offset + NNConfig.batch_size), :]
+                    batch_labels = self.train_labels[offset:(offset + NNConfig.batch_size)]
+                    batch_labels = batch_labels.reshape(len(batch_labels), 1)
+
+                    # print('-' * 80)
+                    # for vec in batch_labels:
+                    #   print('.' * 200)
+                    #   print(self.get_words(vec))
+
+                    feed_dict = {tf_train_dataset: batch_data, tf_train_labels: batch_labels}
+                    if NNConfig.regularization:
+                        feed_dict[beta_regu] = NNConfig.beta_regu
+                    logger.debug('start optimizing')
+                    _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
+                    logger.debug('optimizing finished')
+                    if (step % NNConfig.summary_steps == 0):
+                        logger.info("Minibatch loss at step %d: %f" % (step, l))
+                        logger.info("Minibatch MSE: %.3f" % session.run(accuracy,
+                                                                        feed_dict={pre: predictions,
+                                                                                   lbl: batch_labels}))
+                        for i in range(0, 5):
+                            print("label value:", batch_labels[i], \
+                                  "estimated value:", predictions[i])
+                        # self.print_words(predictions, batch_labels)
+                        steps, valid_data_batches, valid_label_batches = self.batchData(data=self.valid_dataset,
+                                                                                        labels=self.valid_labels,
+                                                                                        batch_size=NNConfig.batch_size)
+                        valid_mse = 0
+                        for step in range(0, steps):
+                            batch_prediction = session.run(valid_prediction,
+                                                           feed_dict={tf_valid_dataset: valid_data_batches[step]})
+
+                            batch_mse = session.run(accuracy, feed_dict={pre: batch_prediction,
+                                                                         lbl: valid_label_batches[step]})
+                            valid_mse += batch_mse
+                        logger.info('Validation MSE: %.3f' % valid_mse)
+
+                        steps, test_data_batches, test_label_batches = self.batchData(data=self.test_dataset,
+                                                                                      labels=self.test_labels,
+                                                                                      batch_size=NNConfig.batch_size)
+                        test_mse = 0
+                        for step in range(0, steps):
+                            batch_prediction = session.run(test_prediction,
+                                                           feed_dict={tf_test_dataset: test_data_batches[step],
+                                                                      lbl: test_label_batches[step]})
+                            batch_mse = session.run(accuracy, feed_dict={pre: batch_prediction,
+                                                                         lbl: test_label_batches[step]})
+                            test_mse += batch_mse
+                        logger.info('Test MSE: %.3f' % test_mse)
+
     def simple_NN(self):
         logger.info("creating the computational graph...")
         graph = tf.Graph()

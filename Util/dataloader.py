@@ -54,7 +54,7 @@ class DataLoader(object):
 
 
     def create_datasets(self, dataset, labels, train_ratio, valid_ratio, test_ratio):
-        data, label = Utilities.shufflize(dataset, labels)
+        data, labels = Utilities.shufflize(dataset, labels)
         # split training, validation and testing sets
         train_size, valid_size, test_size = int(train_ratio * len(data)), int(valid_ratio * len(data)), int(
             test_ratio * len(data))

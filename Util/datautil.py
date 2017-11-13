@@ -544,7 +544,32 @@ class Utilities:
     def shufflize(data, label):
         assert len(data) == len(label)
         perm = np.random.permutation(len(data))
-        return data[perm], data[perm]
+        return data[perm], label[perm]
+
+
+    @staticmethod
+    def pair_gen(self, data, label):
+        assert len(data) == len(label)
+        perm = np.random.permutation(len(data))
+        data2 = data[perm]
+        label2 = label[perm]
+
+        pair_label = []
+        filtered = []
+        for i in range(0, len(label)):
+            if label[i] < label2[i]:
+                pair_label.append(0)
+            elif label[i] > label2[i]:
+                pair_label.append(1)
+            else:
+                filtered.append(i)
+                continue
+        data = np.delete(data, filtered)
+        data2 = np.delete(data2, filtered)
+        assert len(data) == len(pair_label)
+
+        return data, data2, pair_label
+
 
     @staticmethod
     def recursive_glob(treeroot, pattern):
