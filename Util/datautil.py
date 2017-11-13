@@ -538,7 +538,7 @@ class Retrieval_Data_Util:
 
 class Utilities:
 
-    twolabels = True
+    twolabels = False
 
     @staticmethod
     def shufflize(data, label):
