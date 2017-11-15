@@ -47,7 +47,7 @@ class NN:
             batch_data = data[offset:(offset + batch_size), :]
             batch_labels = labels[offset:(offset + batch_size)]
             # get rank only from label
-            batch_labels = batch_labels[1, :]
+            batch_labels = batch_labels[:, 1]
             batch_labels = batch_labels.reshape(batch_size, 1)
             data_batches.append(batch_data)
             labels_batches.append(batch_labels)
@@ -74,7 +74,7 @@ class NN:
             batch_data_right = data_left[offset:(offset + batch_size), :]
             batch_labels = labels[offset:(offset + batch_size)]
             # get rank only from label
-            batch_labels = batch_labels[1, :]
+            batch_labels = batch_labels[:, 1]
             batch_labels = batch_labels.reshape(batch_size, 1)
             data_left_batches.append(batch_data_left)
             data_right_batches.append(batch_data_right)
@@ -109,7 +109,7 @@ class NN:
                 batch_data = self.train_dataset[offset:(offset + NNConfig.batch_size), :]
                 batch_labels = self.train_labels[offset:(offset + NNConfig.batch_size)]
                 # get rank only from label
-                batch_labels = batch_labels[1,:]
+                batch_labels = batch_labels[:, 1]
                 batch_labels = batch_labels.reshape(len(batch_labels), 1)
 
                 # print('-' * 80)
