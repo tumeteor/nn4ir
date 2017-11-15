@@ -663,7 +663,7 @@ class Utilities:
                 else:
                     label_new.append(labels[i, 1] - labels[j, 1])
 
-        return data_left, data_right, label_new
+        return np.array(data_left), np.array(data_right), np.array(label_new)
 
 
 

@@ -24,4 +24,5 @@ class NNConfig:
     num_sampled = 64  # Number of negative examples to sample.
     train_optimizer = None  # GradientDescent, Adadelta, Adagrad, Momentum, Adam, Ftrl, RMSProp,
 
+    label_size = 2
 

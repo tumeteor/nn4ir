@@ -4,16 +4,7 @@ from Util.dataloader import DataLoader
 from argparse import ArgumentParser
 from ranking.NN import NN
 import numpy as np
-import logging
-logFormatter = logging.Formatter("%(asctime)s [%(threadName)-12.12s] [%(levelname)-5.5s]  %(message)s")
-fileHandler = logging.FileHandler("{0}/{1}.log".format("./", "Fullyconnected_NN"))
-fileHandler.setFormatter(logFormatter)
-consoleHandler = logging.StreamHandler()
-consoleHandler.setFormatter(logFormatter)
-logger = logging.getLogger()
-logger.setLevel(logging.INFO)
-logger.addHandler(fileHandler)
-logger.addHandler(consoleHandler)
+
 
 
 class NN(NN):
@@ -32,7 +23,7 @@ class NN(NN):
 
 
     def simple_NN_prob(self):
-        logger.info("creating the computational graph...")
+        self.log.info("creating the computational graph...")
         graph = tf.Graph()
         with graph.as_default():
             with tf.device(self.mode):
@@ -121,7 +112,7 @@ class NN(NN):
 
                 loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits, tf_train_labels))
 
-                logger.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_left)))
+                self.log.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_left)))
 
                 # loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * NNConfig.batch_size)
                 # loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
@@ -153,7 +144,7 @@ class NN(NN):
 
                     # accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
 
-        logger.info('running the session...')
+        self.log.info('running the session...')
 
         self.train_pairwise(graph, self.train_dataset, self.train_labels, self.valid_dataset, self.valid_labels, self.test_dataset, self.test_labels,
                        tf_train_left, tf_train_right,
@@ -162,7 +153,7 @@ class NN(NN):
 
 
     def simple_NN_pairwise(self):
-        logger.info("creating the computational graph...")
+        self.log.info("creating the computational graph...")
         graph = tf.Graph()
         with graph.as_default():
             with tf.device(self.mode):
@@ -256,7 +247,7 @@ class NN(NN):
 
                 loss = tf.losses.hinge_loss(labels=tf_train_labels, logits=logits)
 
-                logger.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_left)))
+                self.log.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_left)))
 
                 # loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * NNConfig.batch_size)
                 # loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
@@ -288,7 +279,7 @@ class NN(NN):
 
                     # accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
 
-        logger.info('running the session...')
+        self.log.info('running the session...')
 
         self.train_pairwise(graph, self.train_dataset, self.train_labels, self.valid_dataset, self.valid_labels, self.test_dataset, self.test_labels,
                        tf_train_left, tf_train_right,
@@ -297,7 +288,7 @@ class NN(NN):
 
 
     def simple_NN(self):
-        logger.info("creating the computational graph...")
+        self.log.info("creating the computational graph...")
         graph = tf.Graph()
         with graph.as_default():
             with tf.device(self.mode):
@@ -426,18 +417,18 @@ if __name__ == '__main__':
     try:
         if args.mode == "gpu": nn.mode = "/gpu:0"
         else: nn.mode = "/cpu:0"
-        if args.loss == "point-wise":
-            logger.info("learn with point-wise loss")
+        if args.loss == "pointwise":
+            nn.log.info("learn with point-wise loss")
             nn.simple_NN()
         elif args.loss == "pairwise":
-            logger.info("learn with pair-wise")
+            nn.log.info("learn with pair-wise")
             nn.simple_NN_pairwise()
         else:
-            logger.info("learn with cross entropy")
+            nn.log.info("learn with cross entropy")
             nn.simple_NN_prob()
-        logger.info("done..")
+        nn.log.info("done..")
     except Exception as e:
-        logger.exception(e)
+        nn.log.exception(e)
         raise
 
 

@@ -24,7 +24,7 @@ class NN:
         self.valid_labels = None
         self.test_dataset = None
         self.test_labels = None
-
+        self.log = logger
 
     @abstractmethod
     def simple_NN(self,mode):
@@ -162,9 +162,13 @@ class NN:
                        tf_train_labels, tf_valid_left, tf_valid_right, tf_test_left, tf_test_right, train_prediction, valid_prediction,
                        test_prediction, loss, optimizer, accuracy, pre, lbl, beta_regu, prob=False):
 
+        self.log.info("start transforming pairwise")
+
         train_data_left, train_data_right, train_labels_new = Utilities.transform_pairwise(train_dataset, train_labels, prob)
         valid_data_left, valid_data_right, valid_labels_new = Utilities.transform_pairwise(valid_dataset, valid_labels, prob)
         test_data_left, test_data_right, test_labels_new = Utilities.transform_pairwise(test_dataset, test_labels, prob)
+
+        self.log.info("end transforming pairwise")
 
         with tf.Session(graph=graph, config=tf.ConfigProto(log_device_placement=True)) as session:
             session.run(tf.global_variables_initializer())
