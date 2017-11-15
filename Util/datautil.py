@@ -189,7 +189,7 @@ class TextDataHandler:
             #label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]],language='german')
             #label_wordIds_vec = self.word_list_to_id_list(label_tokens)
             #labels[j] = self.get_binary_vector(label_wordIds_vec)
-            labels[j] = lbl[i]
+            labels[j] = [float(x) for x in lbl[i]]
             j += 1
         print("number of docs not in archive: {}".format(cnt))
 
@@ -529,7 +529,7 @@ class Retrieval_Data_Util:
                     d.append(surt(row[4]))
                     # get Bing rank as label
                     # qid - rank
-                    q.append([float(row[0]),float(row[1])])
+                    q.append([row[0],row[1]])
             f.close()
         return d, q
 
