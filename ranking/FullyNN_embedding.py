@@ -422,7 +422,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--query_size', help='number of queries for training', required=False)
     parser.add_argument('-l', '--loss', help='loss function [point-wise, pair-wise]', required=False)
     args = parser.parse_args()
-    nn = NN() if args.query_size is None else NN(qsize=args.query_size)
+    nn = NN(qsize=args.query_size)
     try:
         if args.mode == "gpu": nn.mode = "/gpu:0"
         else: nn.mode = "/cpu:0"
