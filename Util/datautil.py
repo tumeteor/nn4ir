@@ -129,7 +129,7 @@ class TextDataHandler:
     def make_arrays(self, nb_rows, vec_size):
         if nb_rows:
             dataset = np.ndarray((nb_rows, vec_size), dtype=np.float32)
-            labels = np.ndarray((nb_rows, 1), dtype=np.float32)
+            labels = np.ndarray((nb_rows, 2), dtype=np.float32)
         else:
             dataset, labels = None, None
         return dataset, labels
@@ -164,6 +164,7 @@ class TextDataHandler:
             # check key both for docs and labels
             # Note: some times labels are missing :/
             if dts[i] in docdict.keys():
+                # lbl[i]: queryid - rank pair
                 if lbl[i][0] in qid_title_dict.keys():
                     nIns += 1
 
@@ -188,7 +189,7 @@ class TextDataHandler:
             #label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]],language='german')
             #label_wordIds_vec = self.word_list_to_id_list(label_tokens)
             #labels[j] = self.get_binary_vector(label_wordIds_vec)
-            labels[j] = float(lbl[i][1])
+            labels[j] = lbl[i]
             j += 1
         print("number of docs not in archive: {}".format(cnt))
 
@@ -239,7 +240,9 @@ class TextDataHandler:
 
             # query - label
             # labels.append(qid_title_dict[lbl[i]])
-            labels.append(ranks[int(lbl[i][1])-1])
+
+            rel_score = ranks[int(lbl[i][1])-1]
+            labels.append([lbl[i][0], rel_score])
 
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
@@ -289,7 +292,8 @@ class TextDataHandler:
             #label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
             #label_wordIds_vec = self.word_list_to_id_list(label_tokens)
             #labels.append(label_wordIds_vec)
-            labels.append(ranks[int(lbl[i][1]) - 1])
+            rel_score = ranks[int(lbl[i][1]) - 1]
+            labels.append([lbl[i][0], rel_score])
 
         # print('Full dataset tensor:', dataset.shape, labels.shape)
         # print('Mean:', np.mean(dataset))
@@ -523,7 +527,9 @@ class Retrieval_Data_Util:
                 if int(row[1]) <= top_k:
                     # urls in Bing is not normalized yet
                     d.append(surt(row[4]))
-                    q.append([row[0],row[1]]) # get Bing rank as label
+                    # get Bing rank as label
+                    # qid - rank
+                    q.append([float(row[0]),float(row[1])])
             f.close()
         return d, q
 
@@ -636,7 +642,28 @@ class Utilities:
         dist = e / np.sum(e)
         return dist
 
+    @staticmethod
+    def transform_pairwise(data, labels, prob=False):
+        """Transforms data into pairs with balanced labels for ranking"""
 
+        assert len(data) == len(labels)
+        data_left = []
+        data_right = []
+        label_new = []
+        comb = itertools.combinations(len(data), 2)
+        for k, (i, j) in enumerate(comb):
+            if labels[i, 1] == labels[j, 1] or labels[i, 0] == labels[j, 0]:
+                # skip same doc or different query
+                continue
+
+                data_left.append(data[i])
+                data_right.append(data[j])
+                if prob:
+                    label_new.append(labels[i, 1] / (labels[i, 1] + labels[j, 1]))
+                else:
+                    label_new.append(labels[i, 1] - labels[j, 1])
+
+        return data_left, data_right, label_new
 
 
 

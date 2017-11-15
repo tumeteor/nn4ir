@@ -23,3 +23,5 @@ class NNConfig:
     candidate_sampling = None  # nce_loss, softmax_loss
     num_sampled = 64  # Number of negative examples to sample.
     train_optimizer = None  # GradientDescent, Adadelta, Adagrad, Momentum, Adam, Ftrl, RMSProp,
+
+

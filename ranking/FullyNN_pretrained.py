@@ -127,41 +127,10 @@ class NN(NN):
                     accuracy = tf.reduce_sum(tf.pow(pre - lbl, 2)) / (2 * tf.cast(tf.shape(lbl)[0], tf.float32))
 
         logger.info('running the session...')
-        with tf.Session(graph=graph, config=tf.ConfigProto(log_device_placement=True)) as session:
-            session.run(tf.global_variables_initializer(), feed_dict={tf_valid_dataset_init: self.valid_dataset,
-                                                                      tf_test_dataset_init: self.test_dataset})
-            # After creating a session and initialize global variables, run the embedding_init operation by feeding in the 2-D array embedding.
-            session.run(embedding_init, feed_dict={embedding_placeholder: embedding})
-            logger.info('Initialized')
-            for step in range(NNConfig.num_steps):
-                offset = (step * NNConfig.batch_size) % (self.train_labels.shape[0] - NNConfig.batch_size)
-                batch_data = self.train_dataset[offset:(offset + NNConfig.batch_size), :]
-                batch_labels = self.train_labels[offset:(offset + NNConfig.batch_size)]
-                batch_labels = batch_labels.reshape(len(batch_labels),1)
+        self.train(graph, tf_train_dataset, tf_train_labels,
+                   tf_valid_dataset, tf_test_dataset, train_prediction, valid_prediction,
+                   test_prediction, loss, optimizer, accuracy, pre, lbl, beta_regu)
 
-                # print('-' * 80)
-                # for vec in batch_labels:
-                #   print('.' * 200)
-                #   print(self.get_words(vec))
-
-                feed_dict = {tf_train_dataset: batch_data, tf_train_labels: batch_labels}
-                if NNConfig.regularization:
-                    feed_dict[beta_regu] = NNConfig.beta_regu
-                logger.debug('start optimizing')
-                _, l, predictions = session.run([optimizer, loss, train_prediction], feed_dict=feed_dict)
-                logger.debug('optimizing done')
-                if (step % NNConfig.summary_steps == 0):
-                    logger.info("Minibatch loss at step %d: %f" % (step, l))
-                    logger.info("Minibatch accuracy: %.3f%%" % session.run(accuracy,
-                                                                           feed_dict={pre: predictions,
-                                                                                      lbl: batch_labels}))
-                    # self.print_words(predictions, batch_labels)
-                    logger.info('Validation accuracy:  %.3f%%' % session.run(accuracy,
-                                                                             feed_dict={pre: valid_prediction.eval(),
-                                                                                        lbl: self.valid_labels}))
-                    logger.info('Test accuracy:  %.3f%%' % session.run(accuracy,
-                                                                       feed_dict={pre: test_prediction.eval(),
-                                                                                  lbl: self.test_labels}))
 
 
 
