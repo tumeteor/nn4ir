@@ -246,7 +246,7 @@ class TextDataHandler:
 
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
-        return dataset, labels.reshape(len(labels), 1)
+        return dataset, labels.reshape(len(labels), 2)
 
     def prepare_data_for_embedding_with_old_vocab(self, dts, lbl, qid_title_dict, length_max):
         Bing_url_size = len(dts)
@@ -301,7 +301,7 @@ class TextDataHandler:
         padded_dataset = self.padding(dataset, length_max)
         labels = np.array(labels)
 
-        return padded_dataset, labels.reshape(len(labels), 1)
+        return padded_dataset, labels.reshape(len(labels), 2)
 
     def padding(self, dataset, length_max):
         '''
@@ -650,7 +650,7 @@ class Utilities:
         data_left = []
         data_right = []
         label_new = []
-        comb = itertools.combinations(len(data), 2)
+        comb = itertools.combinations(range(len(data)), 2)
         for k, (i, j) in enumerate(comb):
             if labels[i, 1] == labels[j, 1] or labels[i, 0] == labels[j, 0]:
                 # skip same doc or different query
