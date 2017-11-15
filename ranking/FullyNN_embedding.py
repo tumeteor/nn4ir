@@ -29,7 +29,6 @@ class NN(NN):
         self.embedded_valid_expanded = None
         self.embedded_test_expanded = None
         self.mode = None
-        self.lf = None
 
 
     def simple_NN_prob(self):
@@ -427,11 +426,15 @@ if __name__ == '__main__':
     try:
         if args.mode == "gpu": nn.mode = "/gpu:0"
         else: nn.mode = "/cpu:0"
-        if args.loss == "point-wise" or args.loss == "pair-wise":
-            logger.info("learn with pair-wise loss")
-            nn.lf = args.loss
-        else: nn.lf == "point-wise"
-        nn.simple_NN()
+        if args.loss == "point-wise":
+            logger.info("learn with point-wise loss")
+            nn.simple_NN()
+        elif args.loss == "pairwise":
+            logger.info("learn with pair-wise")
+            nn.simple_NN_pairwise()
+        else:
+            logger.info("learn with cross entropy")
+            nn.simple_NN_prob()
         logger.info("done..")
     except Exception as e:
         logger.exception(e)
