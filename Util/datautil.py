@@ -645,7 +645,7 @@ class Utilities:
     @staticmethod
     def transform_pairwise(data, labels, prob=False):
         """Transforms data into pairs with balanced labels for ranking"""
-        print(prob)
+
         assert len(data) == len(labels)
         comb = itertools.combinations(range(len(data)), 2)
         i = 0
@@ -657,7 +657,7 @@ class Utilities:
         data_left = np.empty((i, data.shape[1]))
         data_right = np.empty((i, data.shape[1]))
         label_new = np.empty((i, labels.shape[1]))
-
+        comb = itertools.combinations(range(len(data)), 2)
         for k, (i, j) in enumerate(comb):
             if labels[i, 1] == labels[j, 1] or labels[i, 0] == labels[j, 0]:
                 # skip same doc or different query
