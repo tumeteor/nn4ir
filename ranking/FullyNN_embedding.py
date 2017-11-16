@@ -328,8 +328,8 @@ class NN(NN):
                 def init_biases(shape):
                     return  tf.Variable(tf.zeros(shape))
 
-                w_h = init_weights([NNConfig.embedding_dim, NNConfig.num_hidden_nodes])
-                b_h = init_biases([NNConfig.num_hidden_nodes])
+                # w_h = init_weights([NNConfig.embedding_dim, NNConfig.num_hidden_nodes])
+                # b_h = init_biases([NNConfig.num_hidden_nodes])
 
                 w_o = init_weights([NNConfig.num_hidden_nodes, self.output_vector_size])
                 b_o = init_biases([self.output_vector_size])
@@ -351,8 +351,9 @@ class NN(NN):
 
 
                 # Training computation
-                def model(dataset, w_h, b_h, w_o, b_o, train):
-                    if NNConfig.dropout and train:
+                def model(dataset, w_o, b_o, train_mode):
+                    w_hs = []
+                    if NNConfig.dropout and train_mode:
                         drop_h = dataset
                         for i in range(0, NNConfig.num_hidden_layers):
                             drop_i = tf.nn.dropout(drop_h, NNConfig.dropout_keep_prob_input)
@@ -361,28 +362,30 @@ class NN(NN):
 
                             h_lay_train = tf.nn.relu(tf.matmul(drop_i, w_h) + b_h)
                             drop_h = tf.nn.dropout(h_lay_train, NNConfig.dropout_keep_prob_hidden)
+                            w_hs.append(w_h)
 
-                        return tf.matmul(drop_h, w_o) + b_o
+                        return tf.matmul(drop_h, w_o) + b_o, w_hs
                     else:
                         h_lay_train = dataset
                         for i in range(0, NNConfig.num_hidden_layers):
                             w_h = init_weights([h_lay_train.shape.as_list()[1], NNConfig.num_hidden_nodes])
                             b_h = init_biases([NNConfig.num_hidden_nodes])
                             h_lay_train = tf.nn.relu(tf.matmul(h_lay_train, w_h) + b_h)  # or tf.nn.sigmoid
+                            w_hs.append(w_h)
 
-                        return tf.matmul(h_lay_train, w_o) + b_o
+                        return tf.matmul(h_lay_train, w_o) + b_o, w_hs
 
 
                 self.log.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_expanded)))
 
 
-                logits = model(self.embedded_train_expanded, w_h, b_h, w_o, b_o, True)
+                logits, w_hs = model(self.embedded_train_expanded, w_o, b_o, True)
                 loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * NNConfig.batch_size)
 
                 #loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
                 # tf.nn.sigmoid_cross_entropy_with_logits instead of tf.nn.softmax_cross_entropy_with_logits for multi-label case
                 if NNConfig.regularization:
-                    loss += beta_regu * (tf.nn.l2_loss(w_h) + tf.nn.l2_loss(w_o))
+                    loss += beta_regu * (sum(tf.nn.l2_loss(w_h) for w_h in w_hs) + tf.nn.l2_loss(w_o))
                 if NNConfig.learning_rate_decay:
                     learning_rate = tf.train.exponential_decay(NNConfig.learning_rate,global_step,
                                                                NNConfig.decay_steps, NNConfig.decay_rate, staircase=True)
@@ -393,8 +396,8 @@ class NN(NN):
 
                 # score model: linear activation
                 train_prediction = logits
-                valid_prediction = model(self.embedded_valid_expanded, w_o, b_o, False)
-                test_prediction = model(self.embedded_test_expanded, w_o, b_o, False)
+                valid_prediction, w_v = model(self.embedded_valid_expanded, w_o, b_o, False)
+                test_prediction, w_t = model(self.embedded_test_expanded, w_o, b_o, False)
 
                 '''
                 run accuracy scope
