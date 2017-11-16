@@ -656,8 +656,8 @@ class Utilities:
                 continue
             i += 1
         data_left = np.empty((i, data.shape[1]))
-        data_right = np.array((i, data.shape[1]))
-        label_new = np.array((i, labels.shape[1]))
+        data_right = np.empty((i, data.shape[1]))
+        label_new = np.empty((i, labels.shape[1]))
 
         for k, (i, j) in enumerate(comb):
             if labels[i, 1] == labels[j, 1] or labels[i, 0] == labels[j, 0]:
