@@ -11,6 +11,7 @@ class NN(NN):
     def __init__(self, qsize="1k"):
         self.d_loader = DataLoader(embedding=True, qsize=qsize)
         self.input_vector_size = NNConfig.max_doc_size
+        super(NN, self).__init__()
         # output vector size = 1 for scoring model
         self.output_vector_size = 1
         self.train_dataset, self.train_labels, self.valid_dataset, \
@@ -401,7 +402,7 @@ class NN(NN):
 
                     # accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
 
-        logger.info('running the session...')
+        self.log.info('running the session...')
         self.train( graph, tf_train_dataset, tf_train_labels,
               tf_valid_dataset, tf_test_dataset, train_prediction, valid_prediction,
               test_prediction, loss, optimizer, accuracy, pre, lbl, beta_regu)
