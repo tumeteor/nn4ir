@@ -645,10 +645,8 @@ class Utilities:
     @staticmethod
     def transform_pairwise(data, labels, prob=False):
         """Transforms data into pairs with balanced labels for ranking"""
-
+        print(prob)
         assert len(data) == len(labels)
-        print("aaaaaaaaaaaaa")
-
         comb = itertools.combinations(range(len(data)), 2)
         i = 0
         for k, (i, j) in enumerate(comb):
@@ -669,7 +667,6 @@ class Utilities:
             np.append(data_right, data[j])
             if prob:
                 np.append(label_new, labels[i, 1] / (labels[i, 1] + labels[j, 1]))
-                print("label :{}".format(labels[i, 1] / (labels[i, 1] + labels[j, 1])))
             else:
                 np.append(label_new, float(labels[i, 1]) - float(labels[j, 1]))
                 print("label :{}".format(labels[i, 1] / (labels[i, 1] + labels[j, 1])))
