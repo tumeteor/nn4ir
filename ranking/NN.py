@@ -174,7 +174,7 @@ class NN:
             session.run(tf.global_variables_initializer())
             logger.info('Initialized')
             for step in range(NNConfig.num_steps):
-                offset = (step * NNConfig.batch_size) % (train_labels.shape[0] - NNConfig.batch_size)
+                offset = (step * NNConfig.batch_size) % (train_labels_new.shape[0] - NNConfig.batch_size)
                 batch_data_left = train_data_left[offset:(offset + NNConfig.batch_size), :]
                 batch_data_right = train_data_right[offset:(offset + NNConfig.batch_size), :]
                 batch_labels = train_labels_new[offset:(offset + NNConfig.batch_size)]
