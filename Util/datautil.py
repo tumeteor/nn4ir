@@ -647,6 +647,7 @@ class Utilities:
         """Transforms data into pairs with balanced labels for ranking"""
 
         assert len(data) == len(labels)
+        print("aaaaaaaaaaaaa")
 
         comb = itertools.combinations(range(len(data)), 2)
         i = 0
@@ -671,6 +672,7 @@ class Utilities:
                 print("label :{}".format(labels[i, 1] / (labels[i, 1] + labels[j, 1])))
             else:
                 np.append(label_new, float(labels[i, 1]) - float(labels[j, 1]))
+                print("label :{}".format(labels[i, 1] / (labels[i, 1] + labels[j, 1])))
         return data_left, data_right, label_new
 
 
