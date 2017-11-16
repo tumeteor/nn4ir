@@ -656,12 +656,12 @@ class Utilities:
                 # skip same doc or different query
                 continue
 
-                data_left.append(data[i])
-                data_right.append(data[j])
-                if prob:
-                    label_new.append(labels[i, 1] / (labels[i, 1] + labels[j, 1]))
-                else:
-                    label_new.append(labels[i, 1] - labels[j, 1])
+            data_left.append(data[i])
+            data_right.append(data[j])
+            if prob:
+                label_new.append(labels[i, 1] / (labels[i, 1] + labels[j, 1]))
+            else:
+                label_new.append(labels[i, 1] - labels[j, 1])
         assert(len(data_left) == len(data_right) == len(label_new))
         return np.array(data_left), np.array(data_right), np.array(label_new)
 
