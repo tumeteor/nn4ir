@@ -87,7 +87,7 @@ class NN(NN):
 
                 # Training computation
                 def model(data_left, data_right, w_h, b_h, w_o, b_o, train_mode):
-                    dataset = tf.concat([data_left, data_right], axis=0)
+                    dataset = tf.concat([data_left, data_right], axis=1)
                     if NNConfig.dropout and train_mode:
                         drop_h = dataset
                         for i in range(0, NNConfig.num_hidden_layers):
@@ -152,8 +152,6 @@ class NN(NN):
                        tf_train_labels, tf_valid_left, tf_valid_right, tf_test_left, tf_test_right, train_prediction, valid_prediction,
                        test_prediction, loss, optimizer, accuracy, pre, lbl, beta_regu, prob=True)
 
-
-    @property
     def simple_NN_pairwise(self):
         self.log.info("creating the computational graph...")
         graph = tf.Graph()
@@ -369,7 +367,7 @@ class NN(NN):
                         return tf.matmul(h_lay_train, w_o) + b_o
 
 
-                logger.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_expanded)))
+                self.log.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_expanded)))
 
 
                 logits = model(self.embedded_train_expanded, w_h, b_h, w_o, b_o, True)
