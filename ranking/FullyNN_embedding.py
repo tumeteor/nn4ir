@@ -271,8 +271,8 @@ class NN(NN):
 
                 # score model: linear activation
                 train_prediction = logits
-                valid_prediction = pairwise_model(self.embedded_valid_left, self.embedded_valid_right, w_h, b_h, w_o, b_o, False)
-                test_prediction = pairwise_model(self.embedded_test_left, self.embedded_test_right, w_h, b_h, w_o, b_o, False)
+                valid_prediction = pairwise_model(self.embedded_valid_left, self.embedded_valid_right, w_o, b_o, False)
+                test_prediction = pairwise_model(self.embedded_test_left, self.embedded_test_right, w_o, b_o, False)
 
                 '''
                 run accuracy scope
