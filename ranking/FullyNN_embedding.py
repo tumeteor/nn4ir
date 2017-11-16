@@ -134,8 +134,8 @@ class NN(NN):
 
                 # score model: linear activation
                 train_prediction = logits
-                valid_prediction = model(self.embedded_valid_left, self.embedded_valid_right, w_o, b_o, False)
-                test_prediction = model(self.embedded_test_left, self.embedded_test_right, w_o, b_o, False)
+                valid_prediction, wv = model(self.embedded_valid_left, self.embedded_valid_right, w_o, b_o, False)
+                test_prediction, tv = model(self.embedded_test_left, self.embedded_test_right, w_o, b_o, False)
 
                 '''
                 run accuracy scope
@@ -393,8 +393,8 @@ class NN(NN):
 
                 # score model: linear activation
                 train_prediction = logits
-                valid_prediction = model(self.embedded_valid_expanded, w_h, b_h, w_o, b_o, False)
-                test_prediction = model(self.embedded_test_expanded, w_h, b_h, w_o, b_o, False)
+                valid_prediction = model(self.embedded_valid_expanded, w_o, b_o, False)
+                test_prediction = model(self.embedded_test_expanded, w_o, b_o, False)
 
                 '''
                 run accuracy scope

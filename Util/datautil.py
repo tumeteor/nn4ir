@@ -668,6 +668,7 @@ class Utilities:
             np.append(data_right, data[j])
             if prob:
                 np.append(label_new, labels[i, 1] / (labels[i, 1] + labels[j, 1]))
+                print("label :{}".format(labels[i, 1] / (labels[i, 1] + labels[j, 1])))
             else:
                 np.append(label_new, float(labels[i, 1]) - float(labels[j, 1]))
         return data_left, data_right, label_new
