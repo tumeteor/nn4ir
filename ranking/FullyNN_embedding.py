@@ -247,7 +247,7 @@ class NN(NN):
                     logits_right, w_hs_right = model(data_right, w_o, b_o, train_mode)
 
                     logits = logits_left - logits_right
-                    return logits
+                    return logits, w_hs_left + w_hs_right
 
                 logits, w_hs = pairwise_model(self.embedded_train_left, self.embedded_train_right, w_o, b_o, True)
 
@@ -271,8 +271,8 @@ class NN(NN):
 
                 # score model: linear activation
                 train_prediction = logits
-                valid_prediction = pairwise_model(self.embedded_valid_left, self.embedded_valid_right, w_o, b_o, False)
-                test_prediction = pairwise_model(self.embedded_test_left, self.embedded_test_right, w_o, b_o, False)
+                valid_prediction, w_v = pairwise_model(self.embedded_valid_left, self.embedded_valid_right, w_o, b_o, False)
+                test_prediction, w_t = pairwise_model(self.embedded_test_left, self.embedded_test_right, w_o, b_o, False)
 
                 '''
                 run accuracy scope
