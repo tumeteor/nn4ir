@@ -647,22 +647,29 @@ class Utilities:
         """Transforms data into pairs with balanced labels for ranking"""
 
         assert len(data) == len(labels)
-        data_left = np.array([])
-        data_right = np.array([])
-        label_new = np.array([])
+
         comb = itertools.combinations(range(len(data)), 2)
+        i = 0
+        for k, (i, j) in enumerate(comb):
+            if labels[i, 1] == labels[j, 1] or labels[i, 0] == labels[j, 0]:
+                # skip same doc or different query
+                continue
+            i += 1
+        data_left = np.empty((i, data.shape[1]))
+        data_right = np.array((i, data.shape[1]))
+        label_new = np.array((i, labels.shape[1]))
+
         for k, (i, j) in enumerate(comb):
             if labels[i, 1] == labels[j, 1] or labels[i, 0] == labels[j, 0]:
                 # skip same doc or different query
                 continue
 
-            data_left.append(data[i])
-            data_right.append(data[j])
+            np.append(data_left, data[i])
+            np.append(data_right, data[j])
             if prob:
-                label_new.append(labels[i, 1] / (labels[i, 1] + labels[j, 1]))
+                np.append(label_new, labels[i, 1] / (labels[i, 1] + labels[j, 1]))
             else:
-                label_new.append(float(labels[i, 1]) - float(labels[j, 1]))
-        assert(len(data_left) == len(data_right) == len(label_new))
+                np.append(label_new, float(labels[i, 1]) - float(labels[j, 1]))
         return data_left, data_right, label_new
 
 
