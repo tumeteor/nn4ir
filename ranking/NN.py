@@ -221,8 +221,7 @@ class NN:
                     for step in range(0, steps):
                         batch_prediction = session.run(test_prediction,
                                                        feed_dict={tf_test_left: test_left_batches[step],
-                                                                  tf_test_right: test_right_batches[step],
-                                                                  lbl: test_label_batches[step]})
+                                                                  tf_test_right: test_right_batches[step]})
                         batch_mse = session.run(accuracy, feed_dict={pre: batch_prediction,
                                                                      lbl: test_label_batches[step]})
                         test_mse += batch_mse

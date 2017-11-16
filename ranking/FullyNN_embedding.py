@@ -153,6 +153,7 @@ class NN(NN):
                        test_prediction, loss, optimizer, accuracy, pre, lbl, beta_regu, prob=True)
 
 
+    @property
     def simple_NN_pairwise(self):
         self.log.info("creating the computational graph...")
         graph = tf.Graph()
@@ -423,7 +424,7 @@ if __name__ == '__main__':
             nn.simple_NN()
         elif args.loss == "pairwise":
             nn.log.info("learn with pair-wise")
-            nn.simple_NN_pairwise()
+            nn.simple_NN_pairwise
         else:
             nn.log.info("learn with cross entropy")
             nn.simple_NN_prob()
