@@ -86,7 +86,7 @@ class NN(NN):
 
 
                 # Training computation
-                def model(data_left, data_right, w_h, b_, w_o, b_o, train_mode):
+                def model(data_left, data_right, w_o, b_o, train_mode):
                     dataset = tf.concat([data_left, data_right], axis=1)
                     w_hs = []
                     if NNConfig.dropout and train_mode:
