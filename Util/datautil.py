@@ -647,9 +647,9 @@ class Utilities:
         """Transforms data into pairs with balanced labels for ranking"""
 
         assert len(data) == len(labels)
-        data_left = []
-        data_right = []
-        label_new = []
+        data_left = np.array([])
+        data_right = np.array([])
+        label_new = np.array([])
         comb = itertools.combinations(range(len(data)), 2)
         for k, (i, j) in enumerate(comb):
             if labels[i, 1] == labels[j, 1] or labels[i, 0] == labels[j, 0]:
@@ -663,7 +663,7 @@ class Utilities:
             else:
                 label_new.append(float(labels[i, 1]) - float(labels[j, 1]))
         assert(len(data_left) == len(data_right) == len(label_new))
-        return np.array(data_left), np.array(data_right), np.array(label_new)
+        return data_left, data_right, label_new
 
 
 
