@@ -245,7 +245,7 @@ class NN(NN):
                     logits = logits_left - logits_right
                     return logits
 
-                logits = pairwise_model(self.embedded_train_left, self.embedded_test_right, w_h, b_h, w_o, b_o, True)
+                logits = pairwise_model(self.embedded_train_left, self.embedded_train_right, w_h, b_h, w_o, b_o, True)
 
                 loss = tf.losses.hinge_loss(labels=tf_train_labels, logits=logits)
 
