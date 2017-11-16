@@ -111,7 +111,7 @@ class NN(NN):
 
                 logits = model(self.embedded_train_left, self.embedded_test_right, w_h, b_h, w_o, b_o, True)
 
-                loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits, tf_train_labels))
+                loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
 
                 self.log.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_left)))
 
