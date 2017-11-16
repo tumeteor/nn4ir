@@ -178,6 +178,9 @@ class NN:
                 batch_data_left = train_data_left[offset:(offset + NNConfig.batch_size), :]
                 batch_data_right = train_data_right[offset:(offset + NNConfig.batch_size), :]
                 batch_labels = train_labels_new[offset:(offset + NNConfig.batch_size)]
+                # get rank only from label
+                batch_labels = batch_labels[:, 1]
+                batch_labels = batch_labels.reshape(len(batch_labels), 1)
 
                 feed_dict = {tf_train_left: batch_data_left, tf_train_right: batch_data_right,
                              tf_train_labels: batch_labels}
