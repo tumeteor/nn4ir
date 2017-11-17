@@ -111,6 +111,7 @@ class NN:
                 # get rank only from label
                 batch_labels = batch_labels[:, 1]
                 batch_labels = batch_labels.reshape(len(batch_labels), 1)
+                batch_labels = batch_labels.astype(float)
 
                 # print('-' * 80)
                 # for vec in batch_labels:

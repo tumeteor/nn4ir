@@ -247,7 +247,7 @@ class NN(NN):
                     logits_right, w_hs_right = model(data_right, w_o, b_o, train_mode)
 
                     logits = logits_left - logits_right
-                    return logits, w_hs_left + w_hs_right
+                    return logits, tf.concat(w_hs_left, w_hs_right, axis=0)
 
                 logits, w_hs = pairwise_model(self.embedded_train_left, self.embedded_train_right, w_o, b_o, True)
 
