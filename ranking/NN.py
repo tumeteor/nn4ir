@@ -15,7 +15,6 @@ logger.setLevel(logging.INFO)
 logger.addHandler(fileHandler)
 logger.addHandler(consoleHandler)
 
-
 class NN:
     def __init__(self):
         self.train_dataset = None
@@ -25,9 +24,22 @@ class NN:
         self.test_dataset = None
         self.test_labels = None
         self.log = logger
+        self.pretrained = False
+        self.hybrid = False
+        self.trainwriter = open('tmp/trainloss.tsv', 'w')
+        self.validwriter = open('tmp/validloss.tsv','w')
+        self.testwriter = open('tmp/testloss.tsv','w')
 
     @abstractmethod
     def simple_NN(self,mode):
+        pass
+
+    @abstractmethod
+    def simple_NN_pairwise(self, mode):
+        pass
+
+    @abstractmethod
+    def simple_NN_prob(self, mode):
         pass
 
     def batchData(self, batch_size, data, labels):
@@ -74,7 +86,6 @@ class NN:
             batch_data_right = data_left[offset:(offset + batch_size), :]
             batch_labels = labels[offset:(offset + batch_size)]
             # get rank only from label
-            batch_labels = batch_labels[:, 1]
             batch_labels = batch_labels.reshape(batch_size, 1)
             data_left_batches.append(batch_data_left)
             data_right_batches.append(batch_data_right)
@@ -98,11 +109,14 @@ class NN:
         return self.d_loader.d_handler.id_list_to_word_list(ids)
 
 
+
     def train(self, graph, tf_train_dataset, tf_train_labels,
               tf_valid_dataset, tf_test_dataset, train_prediction, valid_prediction,
               test_prediction, loss, optimizer, accuracy, pre, lbl, beta_regu):
         with tf.Session(graph=graph, config=tf.ConfigProto(log_device_placement=True)) as session:
             session.run(tf.global_variables_initializer())
+            if self.pretrained:
+                session.run(self.embedding_init, feed_dict={self.embedding_placeholder: self.embedding})
             logger.info('Initialized')
             for step in range(NNConfig.num_steps):
                 offset = (step * NNConfig.batch_size) % (self.train_labels.shape[0] - NNConfig.batch_size)
@@ -126,37 +140,44 @@ class NN:
                 logger.debug('optimizing finished')
                 if (step % NNConfig.summary_steps == 0):
                     logger.info("Minibatch loss at step %d: %f" % (step, l))
-                    logger.info("Minibatch MSE: %.3f" % session.run(accuracy,
-                                                                    feed_dict={pre: predictions, lbl: batch_labels}))
+                    self.trainwriter.write(str(step) + "\t" + '%.3f' % (l))
+                    self.trainwriter.write("\n")
+                    # logger.info("Minibatch MSE: %.3f" % session.run(accuracy,
+                    #                                                 feed_dict={pre: predictions, lbl: batch_labels}))
                     for i in range(0, 5):
                         print("label value:", batch_labels[i], \
                               "estimated value:", predictions[i])
                     # self.print_words(predictions, batch_labels)
-                    steps, valid_data_batches, valid_label_batches = self.batchData(data=self.valid_dataset,
+                    vsteps, valid_data_batches, valid_label_batches = self.batchData(data=self.valid_dataset,
                                                                                     labels=self.valid_labels,
                                                                                     batch_size=NNConfig.batch_size)
                     valid_mse = 0
-                    for step in range(0, steps):
+                    for step in range(0, vsteps):
                         batch_prediction = session.run(valid_prediction,
                                                        feed_dict={tf_valid_dataset: valid_data_batches[step]})
 
                         batch_mse = session.run(accuracy, feed_dict={pre: batch_prediction,
                                                                      lbl: valid_label_batches[step]})
                         valid_mse += batch_mse
-                    logger.info('Validation MSE: %.3f' % valid_mse)
+                    logger.info('Validation loss: %.3f' % (valid_mse))
+                    self.validwriter.write(str(step) + "\t" + '%.3f' % (valid_mse / float(vsteps)))
+                    self.validwriter.write("\n")
 
-                    steps, test_data_batches, test_label_batches = self.batchData(data=self.test_dataset,
+                    vsteps, test_data_batches, test_label_batches = self.batchData(data=self.test_dataset,
                                                                                   labels=self.test_labels,
                                                                                   batch_size=NNConfig.batch_size)
                     test_mse = 0
-                    for step in range(0, steps):
+                    for step in range(0, vsteps):
                         batch_prediction = session.run(test_prediction,
                                                        feed_dict={tf_test_dataset: test_data_batches[step],
                                                                   lbl: test_label_batches[step]})
                         batch_mse = session.run(accuracy, feed_dict={pre: batch_prediction,
                                                                      lbl: test_label_batches[step]})
                         test_mse += batch_mse
-                    logger.info('Test MSE: %.3f' % test_mse)
+                    logger.info('Test loss: %.3f' % (test_mse))
+                    self.testwriter.write(str(step) + "\t" + '%.3f' % (test_mse))
+                    self.testwriter.write("\n")
+
 
     def train_pairwise(self, graph, train_dataset, train_labels, valid_dataset, valid_labels, test_dataset, test_labels,
                        tf_train_left, tf_train_right,
@@ -166,8 +187,11 @@ class NN:
         self.log.info("start transforming pairwise")
 
         train_data_left, train_data_right, train_labels_new = Utilities.transform_pairwise(train_dataset, train_labels, prob)
+        self.log.info("end train")
         valid_data_left, valid_data_right, valid_labels_new = Utilities.transform_pairwise(valid_dataset, valid_labels, prob)
+        self.log.info("end valid")
         test_data_left, test_data_right, test_labels_new = Utilities.transform_pairwise(test_dataset, test_labels, prob)
+
 
         self.log.info("end transforming pairwise")
 
@@ -180,7 +204,7 @@ class NN:
                 batch_data_right = train_data_right[offset:(offset + NNConfig.batch_size), :]
                 batch_labels = train_labels_new[offset:(offset + NNConfig.batch_size)]
                 # get rank only from label
-                batch_labels = batch_labels[:, 1]
+                #batch_labels = batch_labels[:, 1]
                 batch_labels = batch_labels.reshape(len(batch_labels), 1)
 
                 feed_dict = {tf_train_left: batch_data_left, tf_train_right: batch_data_right,
@@ -192,18 +216,21 @@ class NN:
                 logger.debug('optimizing finished')
                 if (step % NNConfig.summary_steps == 0):
                     logger.info("Minibatch loss at step %d: %f" % (step, l))
-                    logger.info("Minibatch MSE: %.3f" % session.run(accuracy,
-                                                                    feed_dict={pre: predictions, lbl: batch_labels}))
+                    self.trainwriter.write(str(step) + "\t" + '%.3f' % (l))
+                    self.trainwriter.write("\n")
+
+                    # logger.info("Minibatch MSE: %.3f" % session.run(accuracy,
+                    #                                                 feed_dict={pre: predictions, lbl: batch_labels}))
                     for i in range(0, 5):
                         print("label value:", batch_labels[i], \
                               "estimated value:", predictions[i])
                     # self.print_words(predictions, batch_labels)
-                    steps, valid_left_batches, valid_right_batches, valid_label_batches = self.batchData_pairwise(data_left=valid_data_left,
+                    vsteps, valid_left_batches, valid_right_batches, valid_label_batches = self.batchData_pairwise(data_left=valid_data_left,
                                                                                                                   data_right=valid_data_right,
                                                                                                                   labels=valid_labels_new,
                                                                                                                   batch_size=NNConfig.batch_size)
                     valid_mse = 0
-                    for step in range(0, steps):
+                    for step in range(0, vsteps):
                         batch_prediction = session.run(valid_prediction,
                                                        feed_dict={tf_valid_left: valid_left_batches[step],
                                                                   tf_valid_right: valid_right_batches[step]})
@@ -211,24 +238,31 @@ class NN:
                         batch_mse = session.run(accuracy, feed_dict={pre: batch_prediction,
                                                                      lbl: valid_label_batches[step]})
                         valid_mse += batch_mse
-                    logger.info('Validation MSE: %.3f' % valid_mse)
+                    logger.info('Validation loss: %.3f' % (valid_mse / float(vsteps)))
+                    self.validwriter.write(str(step) + "\t" + '%.3f' % (valid_mse / float(vsteps)))
+                    self.validwriter.write("\n")
 
-                    steps, test_left_batches, test_right_batches, test_label_batches = self.batchData_pairwise(
+                    vsteps, test_left_batches, test_right_batches, test_label_batches = self.batchData_pairwise(
                         data_left=test_data_left,
                         data_right=test_data_right,
                         labels=test_labels_new,
                         batch_size=NNConfig.batch_size)
                     test_mse = 0
-                    for step in range(0, steps):
+                    for step in range(0, vsteps):
                         batch_prediction = session.run(test_prediction,
                                                        feed_dict={tf_test_left: test_left_batches[step],
                                                                   tf_test_right: test_right_batches[step]})
                         batch_mse = session.run(accuracy, feed_dict={pre: batch_prediction,
                                                                      lbl: test_label_batches[step]})
                         test_mse += batch_mse
-                    logger.info('Test MSE: %.3f' % test_mse)
+                    logger.info('Test loss: %.3f' % (test_mse /  float(step)))
+                    self.testwriter.write(str(step) + "\t" + '%.3f' % (test_mse / float(vsteps)))
+                    self.testwriter.write("\n")
 
 
+            self.trainwriter.close()
+            self.validwriter.close()
+            self.testwriter.close()
 
 
 

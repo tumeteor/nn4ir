@@ -243,6 +243,7 @@ class TextDataHandler:
 
             rel_score = ranks[int(lbl[i][1])-1]
             labels.append([lbl[i][0], rel_score])
+        labels = np.array(labels)
 
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
@@ -647,30 +648,51 @@ class Utilities:
         """Transforms data into pairs with balanced labels for ranking"""
 
         assert len(data) == len(labels)
-        comb = itertools.combinations(range(len(data)), 2)
-        i = 0
-        for k, (i, j) in enumerate(comb):
-            if labels[i, 1] == labels[j, 1] or labels[i, 0] == labels[j, 0]:
-                # skip same doc or different query
-                continue
-            i += 1
-        data_left = np.empty((i, data.shape[1]))
-        data_right = np.empty((i, data.shape[1]))
-        label_new = np.empty((i, labels.shape[1]))
-        comb = itertools.combinations(range(len(data)), 2)
-        for k, (i, j) in enumerate(comb):
-            if labels[i, 1] == labels[j, 1] or labels[i, 0] == labels[j, 0]:
-                # skip same doc or different query
-                continue
 
-            np.append(data_left, data[i])
-            np.append(data_right, data[j])
-            if prob:
-                np.append(label_new, float(labels[i, 1]) / (float(labels[i, 1]) + float(labels[j, 1])))
+        pair_dict = {}
+        for i in range(0, len(data)):
+            if labels[i][0] not in pair_dict:
+                q = labels[i][0]
+                pair_dict[q] = [[data[i], float(labels[i][1])]]
             else:
-                np.append(label_new, float(labels[i, 1]) - float(labels[j, 1]))
-                print("label :{}".format(labels[i, 1] / (labels[i, 1] + labels[j, 1])))
+                q = labels[i][0]
+                pair_dict[q].append([data[i], float(labels[i][1])])
+
+
+        length = 0
+        for q, v in pair_dict.items():
+            if len(v) <3: continue
+            comb = itertools.combinations(range(len(v)), 2)
+
+            for k, (i, j) in enumerate(comb):
+                if v[i][1] == v[j][1]: continue
+                length += 1
+
+
+        data_left = np.empty((length, data.shape[1]))
+        data_right = np.empty((length, data.shape[1]))
+        label_new = np.empty((length, 1))
+
+        idx = 0
+        for q, v in pair_dict.items():
+            if len(v) < 3: continue
+            comb = itertools.combinations(range(len(v)), 2)
+
+            for k, (i, j) in enumerate(comb):
+                if v[i][1] == v[j][1]: continue
+                data_left[idx] = v[i][0]
+                data_right[idx] = v[j][0]
+                if prob:
+                    label_new[idx] = v[i][1] / (v[i][1] + v[j][1])
+                else:
+                    label_new[idx] = v[i][1] - v[j][1]
+                idx += 1
+
+
         return data_left, data_right, label_new
+
+
+
 
 
 
