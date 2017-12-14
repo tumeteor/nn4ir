@@ -13,7 +13,7 @@ class NN(NN):
         self.input_vector_size = NNConfig.max_doc_size
         super(NN, self).__init__()
         # output vector size = 1 for scoring model
-        self.output_vector_size = 1
+        self.output_vector_size = 10 if self.ordinal else 1
         self.train_dataset, self.train_labels, self.valid_dataset, \
         self.valid_labels, self.test_dataset, self.test_labels = self.d_loader.get_ttv()
 
@@ -359,7 +359,7 @@ class NN(NN):
                             drop_h = tf.nn.dropout(h_lay_train, NNConfig.dropout_keep_prob_hidden)
                             w_hs.append(w_h)
 
-                        return tf.matmul(drop_h, w_o) + b_o, w_hs
+                        return tf.nn.sigmoid(tf.matmul(drop_h, w_o) + b_o), w_hs
                     else:
                         h_lay_train = dataset
                         for i in range(0, NNConfig.num_hidden_layers):
@@ -368,16 +368,16 @@ class NN(NN):
                             h_lay_train = tf.nn.relu(tf.matmul(h_lay_train, w_h) + b_h)  # or tf.nn.sigmoid
                             w_hs.append(w_h)
 
-                        return tf.matmul(h_lay_train, w_o) + b_o, w_hs
+                        return tf.nn.sigmoid(tf.matmul(h_lay_train, w_o) + b_o), w_hs
 
 
                 self.log.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_expanded)))
 
 
                 logits, w_hs = model(self.embedded_train_expanded, w_o, b_o, True)
-                loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * NNConfig.batch_size)
+                #loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * NNConfig.batch_size)
 
-                #loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
+                loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
                 # tf.nn.sigmoid_cross_entropy_with_logits instead of tf.nn.softmax_cross_entropy_with_logits for multi-label case
                 if NNConfig.regularization:
                     loss += beta_regu * (sum(tf.nn.l2_loss(w_h) for w_h in w_hs) + tf.nn.l2_loss(w_o))
@@ -401,9 +401,9 @@ class NN(NN):
                     pre = tf.placeholder("float", shape=[None, self.output_vector_size])
                     lbl = tf.placeholder("float", shape=[None, self.output_vector_size])
                     # compute the mean of all predictions
-                    accuracy = tf.reduce_sum(tf.pow(pre - lbl, 2)) / (2 * tf.cast(tf.shape(lbl)[0], tf.float32))
+                    # accuracy = tf.reduce_sum(tf.pow(pre - lbl, 2)) / (2 * tf.cast(tf.shape(lbl)[0], tf.float32))
 
-                    # accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
+                    accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
 
         self.log.info('running the session...')
         self.train( graph, tf_train_dataset, tf_train_labels,
@@ -518,6 +518,7 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--query_size', help='number of queries for training', required=False)
     parser.add_argument('-l', '--loss', help='loss function [point-wise, pair-wise]', required=False)
     parser.add_argument('-p', '--pretrained', help='pretrained embedding', required=False)
+    parser.add_argument('-o')
     args = parser.parse_args()
     if args.pretrained == "pretrained":
         nn = NN(qsize=args.query_size, pretrained=True, embedding=False)

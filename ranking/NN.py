@@ -26,9 +26,11 @@ class NN:
         self.log = logger
         self.pretrained = False
         self.hybrid = False
-        self.trainwriter = open('tmp/trainloss.tsv', 'w')
-        self.validwriter = open('tmp/validloss.tsv','w')
-        self.testwriter = open('tmp/testloss.tsv','w')
+        self.trainwriter = open('tmp/trainloss-10kordinal-pointwise.tsv', 'w')
+        self.validwriter = open('tmp/validloss-10kordinal-pointwise.tsv','w')
+        self.testwriter = open('tmp/testloss-10kordinal-pointwise.tsv','w')
+
+        self.ordinal = True
 
     @abstractmethod
     def simple_NN(self,mode):
@@ -58,9 +60,10 @@ class NN:
             offset = (step * batch_size) % (data_length - batch_size)
             batch_data = data[offset:(offset + batch_size), :]
             batch_labels = labels[offset:(offset + batch_size)]
-            # get rank only from label
-            batch_labels = batch_labels[:, 1]
-            batch_labels = batch_labels.reshape(batch_size, 1)
+            if not self.ordinal:
+                # get rank only from label
+                batch_labels = batch_labels[:, 1]
+                batch_labels = batch_labels.reshape(batch_size, 1)
             data_batches.append(batch_data)
             labels_batches.append(batch_labels)
 
@@ -118,14 +121,23 @@ class NN:
             if self.pretrained:
                 session.run(self.embedding_init, feed_dict={self.embedding_placeholder: self.embedding})
             logger.info('Initialized')
+
+
+            self.train_labels = Utilities.transform_ordinal_rank(self.train_labels)
+            self.valid_labels = Utilities.transform_ordinal_rank(self.valid_labels)
+            self.test_labels = Utilities.transform_ordinal_rank(self.test_labels)
+
             for step in range(NNConfig.num_steps):
                 offset = (step * NNConfig.batch_size) % (self.train_labels.shape[0] - NNConfig.batch_size)
                 batch_data = self.train_dataset[offset:(offset + NNConfig.batch_size), :]
                 batch_labels = self.train_labels[offset:(offset + NNConfig.batch_size)]
-                # get rank only from label
-                batch_labels = batch_labels[:, 1]
-                batch_labels = batch_labels.reshape(len(batch_labels), 1)
-                batch_labels = batch_labels.astype(float)
+
+                if self.ordinal: pass
+                else:
+                    # get rank only from label
+                    batch_labels = batch_labels[:, 1]
+                    batch_labels = batch_labels.reshape(len(batch_labels), 1)
+                    batch_labels = batch_labels.astype(float)
 
                 # print('-' * 80)
                 # for vec in batch_labels:

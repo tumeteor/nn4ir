@@ -5,9 +5,46 @@ import io
 import pandas as pd
 import csv
 import justext
+import codecs
+from os.path import basename
+import bz2
+
 class WarcParser:
 
     PATH_TO_WARCS = "/home/nguyen/nn4ir/data/top1k/"
+
+
+    def combineUrls(self, dir):
+
+        urls = []
+
+        for subdir, dirs, files in os.walk(dir):
+            for file in files:
+                csv_reader = csv.reader(file, delimiter='\t', quoting=csv.QUOTE_NONE)
+                for row in csv_reader:
+                    urls.append(row[1])
+
+        return urls
+
+    def trimUrlsFromCompressedFiles(self, dir):
+
+        for subdir, dirs, files in os.walk(dir):
+            for file in files:
+                file1000 = basename(file) + ".txt"
+                output_file = codecs.open(file1000, 'w+', 'utf-8')
+                source_file = bz2.BZ2File(file, "r")
+                count = 0
+                for line in source_file:
+                    count += 1
+                    if count <= 1000:
+                        output_file.write(line)
+                source_file.close()
+                output_file.close()
+
+
+    def getUrlContentsPerQuery(self):
+        pass
+
 
 
     def extractContentFromWarc(self, dir):
@@ -31,7 +68,6 @@ class WarcParser:
                             surtUri = surt(uri)
                             html_content = record.content_stream().read()
                             if html_content is None: continue
-
 
 
                             if surtUri in url_content_dict.keys():

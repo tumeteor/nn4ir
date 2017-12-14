@@ -644,6 +644,26 @@ class Utilities:
         return dist
 
     @staticmethod
+    def transform_ordinal(rank):
+        rs = [0] * 10
+        for i in range(0, len(rs)):
+            if i <= rank * 10: rs[i] = 1
+            else: rs[i] = 0
+        return rs
+
+
+    @staticmethod
+    def transform_ordinal_rank(labels):
+        ordinalLabels = np.empty((len(labels), 10))
+
+        for i in range(0, len(labels)):
+              ordinalLabels[i] = Utilities.transform_ordinal(float(labels[i][1]))
+
+        return   ordinalLabels
+
+
+
+    @staticmethod
     def transform_pairwise(data, labels, prob=False):
         """Transforms data into pairs with balanced labels for ranking"""
 
