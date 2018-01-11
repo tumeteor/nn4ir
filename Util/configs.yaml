@@ -6,6 +6,7 @@ DataConfig:
     run_path : "/home/nguyen/nn4ir/data/docs1k/top1k.qu.labels"
     qtitle_path : "/home/nguyen/nn4ir/data/docs1k/top1k.qtitles"
     glove_file_path : "/home/nguyen/nn4ir/embeddings/de_wiki/de.bin"
+    h5py_file_path : "/home/nguyen/nn4ir/data/docs1k/save/data"
 DataConfig10k:
     all_doc_path : "/home/nguyen/nn4ir/data/docs10k/1rev/nn10k/"
     save_dir_data : "/home/nguyen/nn4ir/data/docs10k/save/data"
@@ -14,6 +15,7 @@ DataConfig10k:
     run_path : "/home/nguyen/nn4ir/data/docs10k/top10k.qu.labels"
     qtitle_path : "/home/nguyen/nn4ir/data/docs10k/top10k.qtitles"
     glove_file_path : "/home/nguyen/nn4ir/embeddings/de_wiki/de.bin"
+    h5py_file_path : "/home/nguyen/nn4ir/data/docs10k/save/data"
 DataConfig100k:
     all_doc_path : "/home/nguyen/nn4ir/data/docs100k/1rev/nn100k/"
     save_dir_data : "/home/nguyen/nn4ir/data/docs100k/save/data"
@@ -22,3 +24,14 @@ DataConfig100k:
     run_path : "/home/nguyen/nn4ir/data/docs100k/top100k.qu.labels"
     qtitle_path : "/home/nguyen/nn4ir/data/docs100k/top100k.qtitles"
     glove_file_path : "/home/nguyen/nn4ir/embeddings/de_wiki/de.bin"
+    h5py_file_path : "/home/nguyen/nn4ir/data/docs100k/save/data"
+TestConfig:
+    all_doc_path : "/home/nguyen/nn4ir/data/labels_15queries/1rev/nn15q/"
+    save_dir_data : "/home/nguyen/nn4ir/data/labels_15queries/save/data"
+    save_dir_model : "/home/nguyen/nn4ir/data/labels_15queries/save/model"
+    qrel_path : "/home/nguyen/nn4ir/data/labels_15queries/15.qu.labels"
+    run_path : "/home/nguyen/nn4ir/data/labels_15queries/15.qu.labels"
+    qtitle_path : "/home/nguyen/nn4ir/data/labels_15queries/15.qtitles"
+    glove_file_path : "/home/nguyen/nn4ir/embeddings/de_wiki/de.bin"
+    h5py_file_path : "/home/nguyen/nn4ir/data/labels_15queries/save/data"
+

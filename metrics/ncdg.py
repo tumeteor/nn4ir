@@ -14,6 +14,14 @@ def ComputeNDCGPerQuery(ideal_ratings, scored_ratings):
     model_dcg = ComputeDCG(model_ranks)
     return model_dcg / ideal_dcg if ideal_dcg > 0 else 0
 
+def ComputeNDCGPerQueryForPairwise(ideal_ratings, model_ranks):
+    print(ideal_ratings)
+    print(model_ranks)
+    ideal_ranks = sorted(ideal_ratings, reverse=True)
+    ideal_dcg = ComputeDCG(ideal_ranks)
+    model_dcg = ComputeDCG(model_ranks)
+    return model_dcg / ideal_dcg if ideal_dcg > 0 else 0
+
 
 def ComputeNDCG(score_file, ndcg_pos):
     ndcg = 0

@@ -5,11 +5,11 @@ class NNConfig:
     test_ratio = .15
     max_doc_size = 2000
     embedding_dim = 300
-    summary_steps = 100
+    summary_steps = 1000
     num_hidden_nodes = 1024
     num_hidden_layers = 4
     batch_size = 100
-    num_steps = 2000
+    num_steps = 200
     beta_regu = 1e-3
     dropout_keep_prob_input = 1
     dropout_keep_prob_hidden = 0.5

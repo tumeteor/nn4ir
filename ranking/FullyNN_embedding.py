@@ -9,18 +9,21 @@ import numpy as np
 
 class NN(NN):
     def __init__(self, embedding, pretrained, qsize="1k"):
-        self.d_loader = DataLoader(embedding=embedding, pretrained=pretrained, qsize=qsize)
-        self.input_vector_size = NNConfig.max_doc_size
         super(NN, self).__init__()
-        # output vector size = 1 for scoring model
-        self.output_vector_size = 10 if self.ordinal else 1
-        self.train_dataset, self.train_labels, self.valid_dataset, \
-        self.valid_labels, self.test_dataset, self.test_labels = self.d_loader.get_ttv()
-
         self.embedded_train_expanded = None
         self.embedded_valid_expanded = None
         self.embedded_test_expanded = None
         self.mode = None
+        self.cache = None
+        self.pretrained = pretrained
+        self.d_loader = DataLoader(embedding=embedding, pretrained=pretrained, qsize=qsize)
+        self.input_vector_size = NNConfig.max_doc_size
+        # output vector size = 1 for scoring model
+        self.output_vector_size = 10 if self.ordinal else 1
+        self.train_dataset, self.train_labels, self.train_queries, self.valid_dataset, \
+        self.valid_labels, self.valid_queries, \
+        self.test_dataset, self.test_labels, self.test_queries = self.d_loader.get_ttv2() if self.cache \
+            else self.d_loader.get_ttv()
 
 
     def simple_NN_prob(self):
@@ -32,12 +35,15 @@ class NN(NN):
                 tf_train_left = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
                 tf_train_right = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
                 tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
+                tf_train_queries = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
 
                 tf_valid_left = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
                 tf_valid_right = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
+                tf_valid_queries = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
 
-                tf_test_left = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
-                tf_test_right = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
+                tf_test_left = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size), name="test_left")
+                tf_test_right = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size), name="test_right")
+                tf_test_queries =  tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size), name="test_queries")
 
                 if NNConfig.regularization:
                     beta_regu = tf.placeholder(tf.float32)
@@ -70,11 +76,17 @@ class NN(NN):
                     embedded_right = tf.nn.embedding_lookup(W, tf_train_right)
                     self.embedded_train_right = tf.reduce_sum(embedded_right, [1])
 
-                    embedded_valid = tf.nn.embedding_lookup(W, tf_valid_left)
-                    self.embedded_valid_left = tf.reduce_sum(embedded_valid, [1])
+                    embedded_queries = tf.nn.embedding_lookup(W, tf_train_queries)
+                    self.embedded_train_queries = tf.reduce_sum(embedded_queries, [1])
 
-                    embedded_valid = tf.nn.embedding_lookup(W, tf_valid_right)
-                    self.embedded_valid_right = tf.reduce_sum(embedded_valid, [1])
+                    embedded_valid_left = tf.nn.embedding_lookup(W, tf_valid_left)
+                    self.embedded_valid_left = tf.reduce_sum(embedded_valid_left, [1])
+
+                    embedded_valid_right = tf.nn.embedding_lookup(W, tf_valid_right)
+                    self.embedded_valid_right = tf.reduce_sum(embedded_valid_right, [1])
+
+                    embedded_valid_queries = tf.nn.embedding_lookup(W, tf_valid_queries)
+                    self.embedded_valid_queries = tf.reduce_sum(embedded_valid_queries, [1])
 
                     embedded_test = tf.nn.embedding_lookup(W, tf_test_left)
                     self.embedded_test_left = tf.reduce_sum(embedded_test, [1])
@@ -82,11 +94,12 @@ class NN(NN):
                     embedded_test = tf.nn.embedding_lookup(W, tf_test_right)
                     self.embedded_test_right = tf.reduce_sum(embedded_test, [1])
 
-
+                    embedded_test_queries = tf.nn.embedding_lookup(W, tf_test_queries)
+                    self.embedded_test_queries = tf.reduce_sum(embedded_test_queries, [1])
 
                 # Training computation
-                def model(data_left, data_right, w_o, b_o, train_mode):
-                    dataset = tf.concat([data_left, data_right], axis=1)
+                def model(data_left, data_right, queries, w_o, b_o, train_mode, name=None):
+                    dataset = tf.concat([queries, data_left, data_right], axis=1)
                     w_hs = []
                     if NNConfig.dropout and train_mode:
                         drop_h = dataset
@@ -99,7 +112,8 @@ class NN(NN):
                             drop_h = tf.nn.dropout(h_lay_train, NNConfig.dropout_keep_prob_hidden)
                             w_hs.append(w_h)
 
-                        return tf.matmul(drop_h, w_o) + b_o, w_hs
+                        return tf.add(tf.matmul(drop_h, w_o), b_o, name=name), w_hs
+
                     else:
                         h_lay_train = dataset
                         for i in range(0, NNConfig.num_hidden_layers):
@@ -108,10 +122,10 @@ class NN(NN):
                             h_lay_train = tf.nn.relu(tf.matmul(h_lay_train, w_h) + b_h)  # or tf.nn.sigmoid
                             w_hs.append(w_h)
 
-                        return tf.matmul(h_lay_train, w_o) + b_o, w_hs
+                        return tf.add(tf.matmul(h_lay_train, w_o), b_o, name=name), w_hs
 
 
-                logits, w_hs = model(self.embedded_train_left, self.embedded_train_right, w_o, b_o, True)
+                logits, w_hs = model(self.embedded_train_left, self.embedded_train_right, self.embedded_train_queries, w_o, b_o, True)
 
                 loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
 
@@ -133,8 +147,9 @@ class NN(NN):
 
                 # score model: linear activation
                 train_prediction = logits
-                valid_prediction, wv = model(self.embedded_valid_left, self.embedded_valid_right, w_o, b_o, False)
-                test_prediction, tv = model(self.embedded_test_left, self.embedded_test_right, w_o, b_o, False)
+                valid_prediction, wv = model(self.embedded_valid_left, self.embedded_valid_right, self.embedded_valid_queries, w_o, b_o, False)
+                with tf.name_scope("test_prediction"):
+                    test_prediction, tv = model(self.embedded_test_left, self.embedded_test_right, self.embedded_test_queries, w_o, b_o, False, name="test_prediction")
 
                 '''
                 run accuracy scope
@@ -150,10 +165,13 @@ class NN(NN):
 
         self.log.info('running the session...')
 
-        self.train_pairwise(graph, self.train_dataset, self.train_labels, self.valid_dataset, self.valid_labels, self.test_dataset, self.test_labels,
-                       tf_train_left, tf_train_right,
-                       tf_train_labels, tf_valid_left, tf_valid_right, tf_test_left, tf_test_right, train_prediction, valid_prediction,
-                       test_prediction, loss, optimizer, accuracy, pre, lbl, beta_regu, prob=True)
+        self.train_pairwise(graph, self.train_dataset, self.train_labels, self.train_queries,
+                            self.valid_dataset, self.valid_labels, self.valid_queries, self.test_dataset, self.test_labels, self.test_queries,
+                            tf_train_left, tf_train_right,
+                            tf_train_labels, tf_train_queries, tf_valid_left, tf_valid_right, tf_valid_queries,
+                            tf_test_left, tf_test_right, tf_test_queries,
+                            train_prediction, valid_prediction,
+                            test_prediction, loss, optimizer, accuracy, pre, lbl, beta_regu, prob=True)
 
     def simple_NN_pairwise(self):
         self.log.info("creating the computational graph...")
@@ -164,12 +182,18 @@ class NN(NN):
                 tf_train_left = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
                 tf_train_right = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
                 tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
+                tf_train_queries = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
 
                 tf_valid_left = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
                 tf_valid_right = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
+                tf_valid_queries = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
 
-                tf_test_left = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
-                tf_test_right = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
+                tf_test_left = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size),
+                                              name="test_left")
+                tf_test_right = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size),
+                                               name="test_right")
+                tf_test_queries = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size),
+                                                 name="test_queries")
 
                 if NNConfig.regularization:
                     beta_regu = tf.placeholder(tf.float32)
@@ -201,11 +225,17 @@ class NN(NN):
                     embedded_right = tf.nn.embedding_lookup(W, tf_train_right)
                     self.embedded_train_right = tf.reduce_sum(embedded_right, [1])
 
-                    embedded_valid = tf.nn.embedding_lookup(W, tf_valid_left)
-                    self.embedded_valid_left = tf.reduce_sum(embedded_valid, [1])
+                    embedded_queries = tf.nn.embedding_lookup(W, tf_train_queries)
+                    self.embedded_train_queries = tf.reduce_sum(embedded_queries, [1])
 
-                    embedded_valid = tf.nn.embedding_lookup(W, tf_valid_right)
-                    self.embedded_valid_right = tf.reduce_sum(embedded_valid, [1])
+                    embedded_valid_left = tf.nn.embedding_lookup(W, tf_valid_left)
+                    self.embedded_valid_left = tf.reduce_sum(embedded_valid_left, [1])
+
+                    embedded_valid_right = tf.nn.embedding_lookup(W, tf_valid_right)
+                    self.embedded_valid_right = tf.reduce_sum(embedded_valid_right, [1])
+
+                    embedded_valid_queries = tf.nn.embedding_lookup(W, tf_valid_queries)
+                    self.embedded_valid_queries = tf.reduce_sum(embedded_valid_queries, [1])
 
                     embedded_test = tf.nn.embedding_lookup(W, tf_test_left)
                     self.embedded_test_left = tf.reduce_sum(embedded_test, [1])
@@ -213,10 +243,13 @@ class NN(NN):
                     embedded_test = tf.nn.embedding_lookup(W, tf_test_right)
                     self.embedded_test_right = tf.reduce_sum(embedded_test, [1])
 
+                    embedded_test_queries = tf.nn.embedding_lookup(W, tf_test_queries)
+                    self.embedded_test_queries = tf.reduce_sum(embedded_test_queries, [1])
 
 
                 # Training computation
-                def model(dataset, w_o, b_o, train_mode):
+                def model(dataset, queries, w_o, b_o, train_mode):
+                    dataset = tf.concat([queries, dataset], axis=1)
                     w_hs = []
                     if NNConfig.dropout and train_mode:
                         drop_h = dataset
@@ -240,14 +273,15 @@ class NN(NN):
 
                         return tf.matmul(h_lay_train, w_o) + b_o, w_hs
 
-                def pairwise_model(data_left, data_right, w_o, b_o, train_mode):
-                    logits_left, w_hs_left = model(data_left, w_o, b_o, train_mode)
-                    logits_right, w_hs_right = model(data_right, w_o, b_o, train_mode)
+                def pairwise_model(data_left, data_right, queries, w_o, b_o, train_mode):
+                    logits_left, w_hs_left = model(data_left, queries, w_o, b_o, train_mode)
+                    logits_right, w_hs_right = model(data_right, queries, w_o, b_o, train_mode)
 
                     logits = logits_left - logits_right
                     return logits, w_hs_left + w_hs_right
 
-                logits, w_hs = pairwise_model(self.embedded_train_left, self.embedded_train_right, w_o, b_o, True)
+                logits, w_hs = pairwise_model(self.embedded_train_left, self.embedded_train_right, self.embedded_train_queries,
+                                              w_o, b_o, True)
 
                 loss = tf.losses.hinge_loss(labels=tf_train_labels, logits=logits)
 
@@ -269,8 +303,12 @@ class NN(NN):
 
                 # score model: linear activation
                 train_prediction = logits
-                valid_prediction, w_v = pairwise_model(self.embedded_valid_left, self.embedded_valid_right, w_o, b_o, False)
-                test_prediction, w_t = pairwise_model(self.embedded_test_left, self.embedded_test_right, w_o, b_o, False)
+                valid_prediction, w_v = pairwise_model(self.embedded_valid_left, self.embedded_valid_right,
+                                                       self.embedded_valid_queries, w_o, b_o, False)
+                with tf.name_scope("test_prediction"):
+                    test_prediction, tv = model(self.embedded_test_left, self.embedded_test_right,
+                                                self.embedded_test_queries, w_o, b_o, False)
+                    test_prediction = tf.identity(test_prediction, name="test_prediction")
 
                 '''
                 run accuracy scope
@@ -301,15 +339,20 @@ class NN(NN):
                 tf_train_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
                 tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
 
+                tf_train_queries = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
+
+
                 # Do not load data to constant!
                 # tf_valid_dataset = tf.constant(self.valid_dataset)
                 # tf_test_dataset = tf.constant(self.test_dataset)
 
                 # create a placeholder
                 tf_valid_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
+                tf_valid_queries = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
                 #tf_valid_dataset = tf.Variable(tf_valid_dataset_init)
 
-                tf_test_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
+                tf_test_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size), name="test")
+                tf_test_queries = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size), name="test_queries")
                 #tf_test_dataset = tf.Variable(tf_test_dataset_init)
 
                 if NNConfig.regularization:
@@ -340,13 +383,16 @@ class NN(NN):
                 with tf.device('/cpu:0'), tf.name_scope("embedding"):
                     self.embedding_layer(
                         tf_train_dataset,
+                        tf_train_queries,
                         tf_valid_dataset,
-                        tf_test_dataset
+                        tf_valid_queries,
+                        tf_test_dataset,
+                        tf_test_queries
                     )
 
-
                 # Training computation
-                def model(dataset, w_o, b_o, train_mode):
+                def model(dataset, queries, w_o, b_o, train_mode):
+                    dataset = tf.concat([queries, dataset], axis=1)
                     w_hs = []
                     if NNConfig.dropout and train_mode:
                         drop_h = dataset
@@ -359,7 +405,10 @@ class NN(NN):
                             drop_h = tf.nn.dropout(h_lay_train, NNConfig.dropout_keep_prob_hidden)
                             w_hs.append(w_h)
 
-                        return tf.nn.sigmoid(tf.matmul(drop_h, w_o) + b_o), w_hs
+                        if self.ordinal:
+                            return tf.nn.sigmoid(tf.matmul(drop_h, w_o) + b_o), w_hs
+                        else:
+                            return tf.matmul(drop_h, w_o + b_o), w_hs
                     else:
                         h_lay_train = dataset
                         for i in range(0, NNConfig.num_hidden_layers):
@@ -368,16 +417,21 @@ class NN(NN):
                             h_lay_train = tf.nn.relu(tf.matmul(h_lay_train, w_h) + b_h)  # or tf.nn.sigmoid
                             w_hs.append(w_h)
 
-                        return tf.nn.sigmoid(tf.matmul(h_lay_train, w_o) + b_o), w_hs
+                        if self.ordinal:
+                            return tf.nn.sigmoid(tf.matmul(h_lay_train, w_o) + b_o), w_hs
+                        else:
+                            return tf.matmul(h_lay_train, w_o) + b_o, w_hs
 
 
                 self.log.info("embedded_train shape: {}".format(tf.shape(self.embedded_train_expanded)))
 
 
-                logits, w_hs = model(self.embedded_train_expanded, w_o, b_o, True)
-                #loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * NNConfig.batch_size)
+                logits, w_hs = model(self.embedded_train_expanded, self.embedded_train_queries, w_o, b_o, True)
 
-                loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
+                if self.ordinal:
+                    loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
+                else:
+                    loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * NNConfig.batch_size)
                 # tf.nn.sigmoid_cross_entropy_with_logits instead of tf.nn.softmax_cross_entropy_with_logits for multi-label case
                 if NNConfig.regularization:
                     loss += beta_regu * (sum(tf.nn.l2_loss(w_h) for w_h in w_hs) + tf.nn.l2_loss(w_o))
@@ -391,8 +445,10 @@ class NN(NN):
 
                 # score model: linear activation
                 train_prediction = logits
-                valid_prediction, w_v = model(self.embedded_valid_expanded, w_o, b_o, False)
-                test_prediction, w_t = model(self.embedded_test_expanded, w_o, b_o, False)
+                valid_prediction, w_v = model(self.embedded_valid_expanded, self.embedded_valid_queries, w_o, b_o, False)
+                with tf.name_scope("test_prediction"):
+                    test_prediction, w_t = model(self.embedded_test_expanded, self.embedded_test_queries, w_o, b_o, False)
+                    test_prediction = tf.identity(test_prediction, name="test_prediction")
 
                 '''
                 run accuracy scope
@@ -401,13 +457,15 @@ class NN(NN):
                     pre = tf.placeholder("float", shape=[None, self.output_vector_size])
                     lbl = tf.placeholder("float", shape=[None, self.output_vector_size])
                     # compute the mean of all predictions
-                    # accuracy = tf.reduce_sum(tf.pow(pre - lbl, 2)) / (2 * tf.cast(tf.shape(lbl)[0], tf.float32))
-
-                    accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
+                    if self.ordinal:
+                        accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
+                    else:
+                        accuracy = tf.reduce_sum(tf.pow(pre - lbl, 2)) / (2 * tf.cast(tf.shape(lbl)[0], tf.float32))
 
         self.log.info('running the session...')
-        self.train( graph, tf_train_dataset, tf_train_labels,
-              tf_valid_dataset, tf_test_dataset, train_prediction, valid_prediction,
+        self.train( graph, tf_train_dataset, tf_train_labels, tf_train_queries,
+              tf_valid_dataset, tf_valid_queries, tf_test_dataset, tf_test_queries,
+                    train_prediction, valid_prediction,
               test_prediction, loss, optimizer, accuracy, pre, lbl, beta_regu)
 
 
@@ -451,7 +509,8 @@ class NN(NN):
 
         return W
 
-    def embedding_layer(self, tf_train_dataset, tf_valid_dataset, tf_test_dataset):
+    def embedding_layer(self, tf_train_dataset, tf_train_queries, tf_valid_dataset, tf_valid_queries,
+                        tf_test_dataset, tf_test_queries):
         if not self.pretrained:
             # Embedding layer
             with tf.device('/cpu:0'), tf.name_scope("embedding"):
@@ -461,11 +520,20 @@ class NN(NN):
                 embedded_train = tf.nn.embedding_lookup(self.W, tf_train_dataset)
                 self.embedded_train_expanded = tf.reduce_sum(embedded_train, [1])
 
+                embedded_train_queries = tf.nn.embedding_lookup(self.W, tf_train_queries)
+                self.embedded_train_queries = tf.reduce_sum(embedded_train_queries, [1])
+
                 embedded_valid = tf.nn.embedding_lookup(self.W, tf_valid_dataset)
                 self.embedded_valid_expanded = tf.reduce_sum(embedded_valid, [1])
 
+                embedded_valid_queries = tf.nn.embedding_lookup(self.W, tf_valid_queries)
+                self.embedded_valid_queries = tf.reduce_sum(embedded_valid_queries, [1])
+
                 embedded_test = tf.nn.embedding_lookup(self.W, tf_test_dataset)
                 self.embedded_test_expanded = tf.reduce_sum(embedded_test, [1])
+
+                embedded_test_queries = tf.nn.embedding_lookup(self.W, tf_test_queries)
+                self.embedded_test_queries = tf.reduce_sum(embedded_test_queries, [1])
         elif self.hybrid:
             only_in_train = self.d_loader.d_handler.get_vocab() - self.d_loader.pretrain_vocab
             train_embeddings = tf.get_variable(
@@ -489,8 +557,11 @@ class NN(NN):
             # per input example. It's fairly typical to do this for bag-of-words type problems.
 
             self.embedded_train_expanded = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_train_dataset), [1])
+            self.embedded_train_queries = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_train_queries), [1])
             self.embedded_valid_expanded = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_valid_dataset), [1])
+            self.embedded_valid_queries = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_valid_queries), [1])
             self.embedded_test_expanded = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_test_dataset), [1])
+            self.embedded_test_queries = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_test_queries), [1])
 
         else:
             embed_vocab_size = len(self.d_loader.pretrain_vocab)
@@ -507,14 +578,18 @@ class NN(NN):
             # per input example. It's fairly typical to do this for bag-of-words type problems.
 
             self.embedded_train_expanded = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_train_dataset), [1])
+            self.embedded_train_queries = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_train_queries), [1])
             self.embedded_valid_expanded = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_valid_dataset), [1])
+            self.embedded_valid_queries = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_valid_queries), [1])
             self.embedded_test_expanded = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_test_dataset), [1])
+            self.embedded_test_queries = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_test_queries), [1])
 
 
 
 if __name__ == '__main__':
     parser = ArgumentParser(description='Required arguments')
     parser.add_argument('-m', '--mode', help='computation mode', required=False)
+    parser.add_argument('-c', '--cache', help='cache data', action='store_true')
     parser.add_argument('-s', '--query_size', help='number of queries for training', required=False)
     parser.add_argument('-l', '--loss', help='loss function [point-wise, pair-wise]', required=False)
     parser.add_argument('-p', '--pretrained', help='pretrained embedding', required=False)
@@ -527,6 +602,8 @@ if __name__ == '__main__':
     try:
         if args.mode == "gpu": nn.mode = "/gpu:0"
         else: nn.mode = "/cpu:0"
+        if args.cache: nn.cache = True
+
         if args.loss == "point-wise":
             nn.log.info("learn with point-wise loss")
             nn.simple_NN()

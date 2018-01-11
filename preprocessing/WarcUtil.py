@@ -20,11 +20,30 @@ class WarcParser:
 
         for subdir, dirs, files in os.walk(dir):
             for file in files:
+                file.title()
                 csv_reader = csv.reader(file, delimiter='\t', quoting=csv.QUOTE_NONE)
                 for row in csv_reader:
                     urls.append(row[1])
 
         return urls
+
+    def combineUrlLabels(self, dir):
+        qIds = {}
+        with open("", "r") as f:
+            csv_reader = csv.reader(f, delimiter='\t', quouting=csv.QUOTE_NONE)
+            for row in csv_reader:
+                qIds[row[1]] = row[0]
+
+        with open("","r") as f:
+            for subdir, dirs, files in os.walk(dir):
+                for file in files:
+                    csv_reader = csv.reader(file, delimiter='\t', quoting=csv.QUOTE_NONE)
+                    for row in csv_reader:
+                        f.write('\t'.join((qIds[file.name], row[0], row[1])))
+                        f.write('\n')
+
+
+
 
     def trimUrlsFromCompressedFiles(self, dir):
 

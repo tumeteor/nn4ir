@@ -14,6 +14,9 @@ import logging
 from surt import surt
 import csv
 import itertools
+import h5py
+from math import ceil
+
 
 # for long CSV
 maxInt = sys.maxsize
@@ -134,6 +137,22 @@ class TextDataHandler:
             dataset, labels = None, None
         return dataset, labels
 
+
+    def prepare_queries(self, queries, length_max, qid_title_dict):
+        qv_list = np.zeros((len(queries),self.get_vocab_size()))
+        i = 0
+        for q in queries:
+            # get title of q
+            q = qid_title_dict[q]
+            if i%10 == 0: print(q)
+            q_tokens = nltk.word_tokenize(TextDataHandler.clean_str(q),language='german')
+            q_wordIds_vec = self.word_list_to_id_list(q_tokens)
+            qv_list[i] = self.get_binary_vector(q_wordIds_vec)
+            i += 1
+        return self.padding(qv_list, length_max)
+
+
+
     def prepare_data(self, dts, lbl, qid_title_dict):
         Bing_url_size = len(dts)
         if Bing_url_size != len(lbl):
@@ -199,12 +218,14 @@ class TextDataHandler:
         return dataset, labels
 
 
-    def prepare_data_for_pretrained_embedding(self, dts, lbl, qid_title_dict):
+    def prepare_data_for_pretrained_embedding(self, dts, lbl, qid_title_dict, testMode=False):
 
         Bing_url_size = len(dts)
         if Bing_url_size != len(lbl):
             raise 'there is problem in the data...'
         docdict = {}
+
+        print("length of qid_title_dict: {}".format(len(qid_title_dict)))
 
         '''
         Retrieve documents from files
@@ -230,6 +251,7 @@ class TextDataHandler:
             # doc
             # check key both for docs and labels
             # Note: some times labels are missing :/
+            # dts: urls
             if dts[i] in docdict.keys():
                 if lbl[i][0] in qid_title_dict.keys():
                     dataset.append(docdict[dts[i]])
@@ -240,14 +262,19 @@ class TextDataHandler:
 
             # query - label
             # labels.append(qid_title_dict[lbl[i]])
-
-            rel_score = ranks[int(lbl[i][1])-1]
-            labels.append([lbl[i][0], rel_score])
+            rel_score = int(lbl[i][1]) if testMode else ranks[int(lbl[i][1])-1]
+            if testMode:
+                labels.append([lbl[i][0], rel_score, dts[i]])
+            else:
+                labels.append([lbl[i][0], rel_score])
         labels = np.array(labels)
 
         # print('Mean:', np.mean(dataset))
         # print('Standard deviation:', np.std(dataset))
-        return dataset, labels.reshape(len(labels), 2)
+        if testMode:
+            return dataset, labels.reshape(len(labels), 3)
+        else:
+            return dataset, labels.reshape(len(labels), 2)
 
     def prepare_data_for_embedding_with_old_vocab(self, dts, lbl, qid_title_dict, length_max):
         Bing_url_size = len(dts)
@@ -534,6 +561,36 @@ class Retrieval_Data_Util:
             f.close()
         return d, q
 
+    def is_number(self,s):
+        try:
+            float(s)
+            return True
+        except ValueError:
+            pass
+
+        try:
+            import unicodedata
+            unicodedata.numeric(s)
+            return True
+        except (TypeError, ValueError):
+            pass
+
+        return False
+
+    def loadGroundtruth(self):
+        print(self._runRes)
+        with open(self._runRes, 'r') as f:
+            csv_reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
+            d = []
+            q = []
+            for row in csv_reader:
+                if len(row) < 5: continue
+                if not self.is_number(row[1]): continue
+                q.append([row[0], row[1]]) # label
+                d.append(surt(row[4])) # url
+            f.close()
+        return d,q
+
     def get_label(self, d, q):
         '''
         return binary relevance
@@ -546,13 +603,89 @@ class Retrieval_Data_Util:
 
 class Utilities:
 
+
     twolabels = False
 
     @staticmethod
-    def shufflize(data, label):
+    def getIntancesFromQueries(queries, pairDict, qv, cache=False, h5py_path=None, type=None):
+        newData = []
+        newLabel = []
+        newQueries = []
+        i = 0
+        for q in queries:
+            docs = pairDict[q]
+            for doc in docs:
+                newData.append(doc[0])
+                newLabel.append([(q).encode('utf8'), doc[1]])
+                newQueries.append(qv[i])
+            i += 1
+
+        if not cache:
+            return np.array(newData), np.array(newLabel), np.array(newQueries)
+
+        else:
+            #loop over h5py in batches
+            batch_size = 10000
+            batches_list = list(range(int(ceil(float(len(newData)) / batch_size))))
+            with h5py.File(h5py_path, 'a') as hf:
+                # loop over batches
+                for n, i in enumerate(batches_list):
+                    i_s = i * batch_size  # index of the first instance in the batch
+                    i_e = min([(i + 1) * batch_size, len(newData)])  # index of the last instance in the batch
+
+                    b_data = newData[i_s:i_e]
+                    b_label = newLabel[i_s:i_e]
+                    b_queries = newQueries[i_s:i_e]
+
+                    if type + "_dataset" in hf.keys():
+                        hf[type + "_dataset"].resize((hf[type + "_dataset"].shape[0] + len(b_data)), axis=0)
+                        hf[type + "_dataset"][-len(b_data):] = b_data
+                        hf[type + "_labels"].resize((hf[type + "_labels"].shape[0] + len(b_label)), axis=0)
+                        hf[type + "_labels"][-len(b_label):] = b_label
+                        hf[type + "_queryset"].resize((hf[type + "_queryset"].shape[0] + len(b_queries)), axis=0)
+                        hf[type + "_queryset"][-len(b_queries):] = b_queries
+                    else:
+                        hf.create_dataset(type + "_dataset", data=b_data, maxshape=(None, len(b_data[0])),
+                                          chunks=True,
+                                          compression="gzip", compression_opts=6)
+                        hf.create_dataset(type + "_labels", data=b_label, maxshape=(None, len(b_label[0])),
+                                          chunks=True,
+                                          compression="gzip", compression_opts=6)
+                        hf.create_dataset(type + "_queryset", data=b_queries,
+                                          maxshape=(None, len(b_queries[0])), chunks=True,
+                                          compression="gzip", compression_opts=6)
+
+
+
+
+
+
+
+
+    @staticmethod
+    def shufflize(data, label, train_ratio, valid_ratio, test_ratio):
         assert len(data) == len(label)
-        perm = np.random.permutation(len(data))
-        return data[perm], label[perm]
+        '''
+        Shuffle per queries
+        '''
+
+        pairDict = Utilities.buildQueryDocDict(data, label, False)
+
+        queries = np.array(list(pairDict.keys()))
+        perm = np.random.permutation(len(queries))
+
+        queries = queries[perm]
+
+
+        train_size, valid_size, test_size = int(train_ratio * len(queries)), int(valid_ratio * len(queries)), int(
+            test_ratio * len(queries))
+        start_tr, end_tr = 0, train_size - 1
+        start_v, end_v = end_tr + 1, end_tr + valid_size
+        start_te, end_te = end_v + 1, end_v + test_size
+        train_queries = queries[start_tr:end_tr]
+        valid_queries = queries[start_v:end_v]
+        test_queries = queries[start_te:end_te]
+        return train_queries, valid_queries, test_queries, pairDict
 
 
     @staticmethod
@@ -659,57 +792,211 @@ class Utilities:
         for i in range(0, len(labels)):
               ordinalLabels[i] = Utilities.transform_ordinal(float(labels[i][1]))
 
-        return   ordinalLabels
-
+        return ordinalLabels
 
 
     @staticmethod
-    def transform_pairwise(data, labels, prob=False):
+    def buildQueryDocDict2(data, labels, queries, eval):
+        '''
+
+        :param data: h5py file
+        :param labels: h5py file
+        :param queries: query vector, h5py file
+        :param eval:
+        :return:
+        '''
+        print('start')
+        pair_dict = {}
+
+        # loop over h5py in batches
+        batch_size = 1000
+        batches_list = list(range(int(ceil(float(len(data)) / batch_size))))
+        # loop over batches
+        for n, i in enumerate(batches_list):
+            i_s = i * batch_size # index of the first instance in the batch
+            i_e = min([(i + 1) * batch_size, len(data)]) # index of the last instance in the batch
+
+            b_data = data[i_s:i_e, :]
+            b_labels = labels[i_s:i_e, :]
+            b_queries = queries[i_s:i_e, :]
+            for j in range(0, len(b_data)):
+                q = b_labels[j][0]
+                url = None
+                if eval:
+                    url = b_labels[j][2]
+                if q not in pair_dict:
+                    pair_dict[q] = [[b_data[j], float(b_labels[j][1]), url, b_queries[j]]] if eval \
+                        else [[b_data[j], float(b_labels[j][1]), b_queries[j]]]
+
+                else:
+                    if eval:
+                        pair_dict[q].append([b_data[j], float(b_labels[j][1]), url, b_queries[j]])
+                    else:
+                        pair_dict[q].append([b_data[j], float(b_labels[j][1]), b_queries[j]])
+
+        print('end')
+
+        return pair_dict
+
+    @staticmethod
+    def buildQueryDocDict(data, labels, eval):
+        '''
+
+        :param data:
+        :param labels:
+        :param eval:
+        :return:
+        '''
+        pair_dict = {}
+        for i in range(0, len(data)):
+            q = labels[i][0]
+            url = None
+            if eval:
+                url = labels[i][2]
+            if q not in pair_dict:
+                pair_dict[q] = [[data[i], float(labels[i][1]), url]] if eval \
+                    else [[data[i], float(labels[i][1])]]
+
+            else:
+                if eval:
+                    pair_dict[q].append([data[i], float(labels[i][1]), url])
+                else:
+                    pair_dict[q].append([data[i], float(labels[i][1])])
+        return pair_dict
+
+
+    @staticmethod
+    def transform_pairwise(data, labels, queries, h5py_path=None, prob=False, eval=False):
         """Transforms data into pairs with balanced labels for ranking"""
 
         assert len(data) == len(labels)
+        assert len(data) == len(queries)
+        print('start')
+        pair_dict = Utilities.buildQueryDocDict2(data, labels, queries, eval)
+        print('done')
+        if not eval:
 
-        pair_dict = {}
-        for i in range(0, len(data)):
-            if labels[i][0] not in pair_dict:
-                q = labels[i][0]
-                pair_dict[q] = [[data[i], float(labels[i][1])]]
-            else:
-                q = labels[i][0]
-                pair_dict[q].append([data[i], float(labels[i][1])])
+            print(data.shape)
+            # data_left = np.empty((length, data.shape[1]))
+            # data_right = np.empty((length, data.shape[1]))
+            # label_new = np.empty((length, 1))
 
-
-        length = 0
-        for q, v in pair_dict.items():
-            if len(v) <3: continue
-            comb = itertools.combinations(range(len(v)), 2)
-
-            for k, (i, j) in enumerate(comb):
-                if v[i][1] == v[j][1]: continue
-                length += 1
+            # query - pair-wise combination scores
+            qPmatDict = {}
 
 
-        data_left = np.empty((length, data.shape[1]))
-        data_right = np.empty((length, data.shape[1]))
-        label_new = np.empty((length, 1))
 
-        idx = 0
-        for q, v in pair_dict.items():
-            if len(v) < 3: continue
-            comb = itertools.combinations(range(len(v)), 2)
+            with h5py.File(h5py_path, 'a') as hf:
+                data_left_batch = np.empty((10000,data.shape[1]))
+                data_right_batch = np.empty((10000,data.shape[1]))
+                data_queries_batch = np.empty((10000,queries.shape[1]))
+                label_new_batch = np.empty((10000,1))
+                cnt = 0
+                idx = 0 #global buffer index
 
-            for k, (i, j) in enumerate(comb):
-                if v[i][1] == v[j][1]: continue
-                data_left[idx] = v[i][0]
-                data_right[idx] = v[j][0]
-                if prob:
-                    label_new[idx] = v[i][1] / (v[i][1] + v[j][1])
-                else:
-                    label_new[idx] = v[i][1] - v[j][1]
-                idx += 1
+                for q, v in pair_dict.items():
+
+                    # v: docs for q
+                    if len(v) < 3: continue
+                    # comb = itertools.combinations(range(len(v)), 2)
+                    # npairs = 0
+                    # for k, (i, j) in enumerate(comb):
+                    #     # v: docid - label
+                    #     if (v[i][0] == v[j][0]).all(): continue
+                    #     npairs += 1
+
+                    comb = itertools.permutations(range(len(v)), 2)
+                    # data_left = np.empty((npairs, data.shape[1]))
+                    # data_right = np.empty((npairs, data.shape[1]))
+                    # label_new = np.empty((npairs, 1))
+                    # data_queries = np.empty((npairs, queries.shape[1]))
 
 
-        return data_left, data_right, label_new
+                    for k, (i, j) in enumerate(comb):
+                        # v: docid - label
+                        if (v[i][0] == v[j][0]).all(): continue
+                        if idx == 10000:
+                            if "data_left" in hf.keys():
+                                hf["data_left"].resize((hf["data_left"].shape[0] + data_left_batch.shape[0]), axis=0)
+                                hf["data_left"][-data_left_batch.shape[0]:] = data_left_batch
+
+                                hf["data_right"].resize((hf["data_right"].shape[0] + data_right_batch.shape[0]), axis=0)
+                                hf["data_right"][-data_right_batch.shape[0]:] = data_right_batch
+
+                                hf["label_new"].resize((hf["label_new"].shape[0] + label_new_batch.shape[0]), axis=0)
+                                hf["label_new"][-label_new_batch.shape[0]:] = label_new_batch
+
+                                hf["queries"].resize((hf["queries"].shape[0] + data_queries_batch.shape[0]), axis=0)
+                                hf["queries"][-data_queries_batch.shape[0]:] = data_queries_batch
+
+                                # reset batch arrays:
+                                data_left_batch = np.empty((10000, data.shape[1]))
+                                data_right_batch = np.empty((10000, data.shape[1]))
+                                data_queries_batch = np.empty((10000, queries.shape[1]))
+                                label_new_batch = np.empty((10000, 1))
+
+                                print("query: {}".format(cnt))
+                            else:
+                                hf.create_dataset("data_left", data=data_left_batch, maxshape=(None, data.shape[1]),
+                                                  chunks=True,
+                                                  compression="gzip", compression_opts=6)
+                                hf.create_dataset("data_right", data=data_right_batch, maxshape=(None, data.shape[1]),
+                                                  chunks=True, compression="gzip", compression_opts=6)
+                                hf.create_dataset("label_new", data=label_new_batch, maxshape=(None, 1), chunks=True,
+                                                  compression="gzip", compression_opts=6)
+                                hf.create_dataset("queries", data=data_queries_batch, maxshape=(None, queries.shape[1]),
+                                                  chunks=True, compression="gzip", compression_opts=6)
+                            idx = 0
+                        data_left_batch[idx] = v[i][0]
+                        data_right_batch[idx] = v[j][0]
+                        if prob:
+                            label_new_batch[idx] = v[i][1] / (v[i][1] + v[j][1]) if (v[i][1] + v[j][1]) != 0 else 0.5
+                        else:
+                            label_new_batch[idx] = v[i][1] - v[j][1]
+                        data_queries_batch[idx] = v[i][2]
+                        assert (v[i][2] == v[j][2]).all()
+                        idx += 1
+
+                    cnt += 1
+
+        else:
+            length = 0
+            for q, v in pair_dict.items():
+                if len(v[0]) < 3: continue
+                comb = itertools.permutations(range(len(v)), 2)
+
+                for k, (i, j) in enumerate(comb):
+                    length += 1
+
+            print(data.shape)
+            data_left = np.empty((length, data.shape[1]))
+            data_right = np.empty((length, data.shape[1]))
+            label_new = np.empty((length, 1))
+            data_queries = np.empty((length), queries.shape[1])
+
+            idx = 0
+            # query - pair-wise combination scores
+            qPmatDict = {}
+            for q, v in pair_dict.items():
+                # v: docs for q
+                if len(v[0]) < 3: continue
+                comb = itertools.permutations(range(len(v)), 2)
+                pmat = {}
+
+                v = np.array(v)
+                urls = v[:,2]
+                for k, (i, j) in enumerate(comb):
+                    data_left[idx] = v[i][0]
+                    data_right[idx] = v[j][0]
+
+                    label_new[idx] = 0 # meaningless for eval
+                    data_queries[idx] = v[i][3]
+                    pmat[idx] = (i, j)
+                    idx += 1
+                qPmatDict[q] = (pmat, urls)
+
+
+            return data_left, data_right, data_queries, label_new, qPmatDict
 
 
 
