@@ -17,7 +17,6 @@ import itertools
 import h5py
 from math import ceil
 
-
 # for long CSV
 maxInt = sys.maxsize
 decrement = True
@@ -60,12 +59,11 @@ class TextDataHandler:
         # word_to_id
         if not pretrained:
             word_to_id_pickle = os.path.join(save_dir, 'word_to_id.pkl')
-            self._word_to_id = self._maybe_pickling(word_to_id_pickle, self._build_dict_from_a_set_of_files, self._filenames)
+            self._word_to_id = self._maybe_pickling(word_to_id_pickle, self._build_dict_from_a_set_of_files,
+                                                    self._filenames)
             # id_to_word
             id_to_word_pickle = os.path.join(save_dir, 'id_to_word.pkl')
             self._id_to_word = self._maybe_pickling(id_to_word_pickle, self._build_reverse_dict, self._word_to_id)
-
-
 
     def _maybe_pickling(self, pickle_name, func, *func_param):
         if os.path.exists(pickle_name) and not self._force_read_input:
@@ -111,7 +109,8 @@ class TextDataHandler:
         # string = re.sub(r"[^A-Za-z0-9]", " ", string)
         return string.strip().lower()
 
-    def read_words(self, counter, filename, doc_count):
+    @staticmethod
+    def read_words(counter, filename, doc_count):
         """
         Tokenization using NLTK
         """
@@ -119,8 +118,8 @@ class TextDataHandler:
             # refactor to read line by line
             for docline in f.readlines():
                 # url \t doctext
-                doc = docline.split("\t",1)[1]
-                doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc),language='german')
+                doc = docline.split("\t", 1)[1]
+                doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc), language='german')
                 # print "number of tokens: {}".format(len(doc_tokens))
                 counter.update(doc_tokens)
                 doc_count += 1
@@ -129,7 +128,8 @@ class TextDataHandler:
                     print(str(doc_count) + " docs has been processed")
             return counter, doc_count
 
-    def make_arrays(self, nb_rows, vec_size):
+    @staticmethod
+    def make_arrays(nb_rows, vec_size):
         if nb_rows:
             dataset = np.ndarray((nb_rows, vec_size), dtype=np.float32)
             labels = np.ndarray((nb_rows, 2), dtype=np.float32)
@@ -137,26 +137,23 @@ class TextDataHandler:
             dataset, labels = None, None
         return dataset, labels
 
-
     def prepare_queries(self, queries, length_max, qid_title_dict):
-        qv_list = np.zeros((len(queries),self.get_vocab_size()))
+        qv_list = np.zeros((len(queries), self.get_vocab_size()))
         i = 0
         for q in queries:
             # get title of q
             q = qid_title_dict[q]
-            if i%10 == 0: print(q)
-            q_tokens = nltk.word_tokenize(TextDataHandler.clean_str(q),language='german')
+            if i % 10 == 0: print(q)
+            q_tokens = nltk.word_tokenize(TextDataHandler.clean_str(q), language='german')
             q_wordIds_vec = self.word_list_to_id_list(q_tokens)
             qv_list[i] = self.get_binary_vector(q_wordIds_vec)
             i += 1
         return self.padding(qv_list, length_max)
 
-
-
     def prepare_data(self, dts, lbl, qid_title_dict):
         Bing_url_size = len(dts)
         if Bing_url_size != len(lbl):
-            raise 'there is problem in the data...'
+            raise Exception('there is problem in the data...')
         docdict = {}
 
         '''
@@ -170,14 +167,14 @@ class TextDataHandler:
                     # url \t doctext
                     doc = docline.split("\t", 1)
                     docid = doc[0]
-                    doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc[1]),language='german')
+                    doc_tokens = nltk.word_tokenize(TextDataHandler.clean_str(doc[1]), language='german')
 
                     data_wordIds_vec = self.word_list_to_id_list(doc_tokens)
                     docdict[docid] = self.get_binary_vector(data_wordIds_vec)
         '''
         retrieve queries for documents (urls)
         '''
-        nIns = 0
+        n_ins = 0
         for i in range(0, Bing_url_size - 1):
             # doc
             # check key both for docs and labels
@@ -185,13 +182,12 @@ class TextDataHandler:
             if dts[i] in docdict.keys():
                 # lbl[i]: queryid - rank pair
                 if lbl[i][0] in qid_title_dict.keys():
-                    nIns += 1
+                    n_ins += 1
 
-
-        dataset, labels = self.make_arrays(nIns, self.get_vocab_size())
+        dataset, labels = self.make_arrays(n_ins, self.get_vocab_size())
         cnt = 0
-        j = 0 # dataset idx
-        for i in range (0, Bing_url_size -1):
+        j = 0  # dataset idx
+        for i in range(0, Bing_url_size - 1):
             # doc
             # check key both for docs and labels
             # Note: some times labels are missing :/
@@ -205,24 +201,18 @@ class TextDataHandler:
                 continue
 
             # query - label
-            #label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]],language='german')
-            #label_wordIds_vec = self.word_list_to_id_list(label_tokens)
-            #labels[j] = self.get_binary_vector(label_wordIds_vec)
             labels[j] = [float(x) for x in lbl[i]]
             j += 1
         print("number of docs not in archive: {}".format(cnt))
 
         print('Full dataset tensor:', dataset.shape, labels.shape)
-        # print('Mean:', np.mean(dataset))
-        # print('Standard deviation:', np.std(dataset))
         return dataset, labels
-
 
     def prepare_data_for_pretrained_embedding(self, dts, lbl, qid_title_dict, testMode=False):
 
         Bing_url_size = len(dts)
         if Bing_url_size != len(lbl):
-            raise 'there is problem in the data...'
+            raise Exception('there is problem in the data...')
         docdict = {}
 
         print("length of qid_title_dict: {}".format(len(qid_title_dict)))
@@ -261,25 +251,22 @@ class TextDataHandler:
                 continue
 
             # query - label
-            # labels.append(qid_title_dict[lbl[i]])
-            rel_score = int(lbl[i][1]) if testMode else ranks[int(lbl[i][1])-1]
+            rel_score = int(lbl[i][1]) if testMode else ranks[int(lbl[i][1]) - 1]
             if testMode:
                 labels.append([lbl[i][0], rel_score, dts[i]])
             else:
                 labels.append([lbl[i][0], rel_score])
         labels = np.array(labels)
 
-        # print('Mean:', np.mean(dataset))
-        # print('Standard deviation:', np.std(dataset))
         if testMode:
             return dataset, labels.reshape(len(labels), 3)
         else:
             return dataset, labels.reshape(len(labels), 2)
 
     def prepare_data_for_embedding_with_old_vocab(self, dts, lbl, qid_title_dict, length_max):
-        Bing_url_size = len(dts)
-        if Bing_url_size != len(lbl):
-            raise 'there is problem in the data...'
+        bing_url_size = len(dts)
+        if bing_url_size != len(lbl):
+            raise Exception('there is problem in the data...')
         docdict = {}
 
         '''
@@ -304,7 +291,7 @@ class TextDataHandler:
         labels = list()
         # normalized Bing rank scores
         ranks = Utilities.ranknorm()
-        for i in range(0, Bing_url_size - 1):
+        for i in range(0, bing_url_size - 1):
             # doc
             # check key both for docs and labels
             # Note: some times labels are missing :/
@@ -317,15 +304,9 @@ class TextDataHandler:
                 continue
 
             # query - label
-            #label_tokens = nltk.word_tokenize(qid_title_dict[lbl[i]], language='german')
-            #label_wordIds_vec = self.word_list_to_id_list(label_tokens)
-            #labels.append(label_wordIds_vec)
             rel_score = ranks[int(lbl[i][1]) - 1]
             labels.append([lbl[i][0], rel_score])
 
-        # print('Full dataset tensor:', dataset.shape, labels.shape)
-        # print('Mean:', np.mean(dataset))
-        # print('Standard deviation:', np.std(dataset))
         padded_dataset = self.padding(dataset, length_max)
         labels = np.array(labels)
 
@@ -355,20 +336,17 @@ class TextDataHandler:
         return padded
 
     def _build_dict_from_a_set_of_files(self, filenames):
-        '''
+        """
         Doc files
         :param filenames:
         :return:
-        '''
+        """
         counter = Counter()
         cnt = 0
         for filename in filenames:
             # parse documents from file
-            counter, cnt = self.read_words(counter,filename, cnt)
+            counter, cnt = self.read_words(counter, filename, cnt)
         count_pairs = sorted(counter.items(), key=lambda x: (-x[1], x[0]))
-        # if vocab_size == -1:
-        # 	vocab_size = len(count_pairs)
-        # words, _ = list(zip(*count_pairs[:vocab_size]))
         words, _ = list(zip(*count_pairs))
         word_to_id = dict(zip(words, range(1, len(words) + 1)))
         return word_to_id
@@ -386,7 +364,8 @@ class TextDataHandler:
         self._id_to_word = self._build_reverse_dict(self._word_to_id)
         print("New Vocab Size:", self.get_vocab_size())
 
-    def _build_reverse_dict(self, original_dict):
+    @staticmethod
+    def _build_reverse_dict(original_dict):
         if not original_dict:
             raise MyError('first build the dictionary...')
         reverse_dict = dict(zip(original_dict.values(), original_dict.keys()))
@@ -433,7 +412,8 @@ class TextDataHandler:
         vec = (np.arange(vocab_size) == np.array(wordIds_vec)[:, None]).astype(np.float32)
         return np.array(vec)
 
-    def get_ids_from_one_hot_vector(self, one_hot_Vec):
+    @staticmethod
+    def get_ids_from_one_hot_vector(one_hot_Vec):
         # TODO: to be implimented
         return None
 
@@ -443,7 +423,8 @@ class TextDataHandler:
         vec[inices] = 1
         return np.array(vec)
 
-    def get_ids_from_binary_vector(self, binary_vector):
+    @staticmethod
+    def get_ids_from_binary_vector(binary_vector):
         return np.nonzero(binary_vector)
 
     def get_freq_vector(self, wordIds_vec):
@@ -490,7 +471,7 @@ class BatchCreator4RNN:
         self.pointer = 0
 
 
-class Retrieval_Data_Util:
+class RetrievalDataUtil:
     # get relevance doc_query_pairs (from experts / crowdsourcing)
     # test: using Bing rank
     # TODO: for Bing rank: take top-50
@@ -500,24 +481,24 @@ class Retrieval_Data_Util:
 
     def __init__(self, runres, qrel, qtitles):
         with codecs.open(qtitles, "r", encoding='utf-8', errors='ignore') as f:
-        #with open(qtitles, 'rb') as f:
+            # with open(qtitles, 'rb') as f:
             csv_reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
             for row in csv_reader:
-            #for utf8_row in csv_reader:
-                #row = [x.decode('utf8') for x in utf8_row]
+                # for utf8_row in csv_reader:
+                # row = [x.decode('utf8') for x in utf8_row]
                 if len(row) < 2: continue
                 self.qid_title_dict[row[0]] = row[1]
             f.close()
         with codecs.open(qrel, "r", encoding='utf-8', errors='ignore') as f:
-        #with codecs.open(qrel, "rb") as f:
+            # with codecs.open(qrel, "rb") as f:
             csv_reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
             for row in csv_reader:
-            #for utf8_row in csv_reader:
+                # for utf8_row in csv_reader:
                 # only select relevant document-query pairs
-                #row = [x.decode('utf8') for x in utf8_row]
+                # row = [x.decode('utf8') for x in utf8_row]
                 # if row[3] == '1':
                 # self.doc_query_pairs.append((row[2], row[0]))
-                #if int(row[1]) <= 100:
+                # if int(row[1]) <= 100:
                 if len(row) < 5: continue
                 self.doc_query_pairs.append((surt(row[4]), row[0]))
 
@@ -527,28 +508,27 @@ class Retrieval_Data_Util:
             f.close()
         self._runRes = runres
 
-
     def get_rel_qd(self):
         d = [tup[0] for tup in self.doc_query_pairs]
         q = [tup[1] for tup in self.doc_query_pairs]
         return d, q
 
-    def get_pseudo_rel_qd_Bing(self, top_k):
-        '''
+    def get_pseudo_rel_qd_bing(self, top_k):
+        """
         query-doc relevance grade
         query_id \t rank \t title \t description \t url \t query_id (tab delimiter)
         :param top_k: top k documents
         :return:
-        '''
+        """
         d = []
         q = []
         with codecs.open(self._runRes, "r", encoding='utf-8', errors='ignore') as f:
-        #with open(self._runRes, "rb") as f:
-            next(f) # skip the first line
+            # with open(self._runRes, "rb") as f:
+            next(f)  # skip the first line
             csv_reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
             for row in csv_reader:
-            #for utf8_row in csv_reader:
-                #row = [x.decode('utf8') for x in utf8_row]
+                # for utf8_row in csv_reader:
+                # row = [x.decode('utf8') for x in utf8_row]
                 if len(row) <= 1:
                     print(row)
                     continue
@@ -557,11 +537,11 @@ class Retrieval_Data_Util:
                     d.append(surt(row[4]))
                     # get Bing rank as label
                     # qid - rank
-                    q.append([row[0],row[1]])
+                    q.append([row[0], row[1]])
             f.close()
         return d, q
 
-    def is_number(self,s):
+    def is_number(self, s):
         try:
             float(s)
             return True
@@ -577,7 +557,7 @@ class Retrieval_Data_Util:
 
         return False
 
-    def loadGroundtruth(self):
+    def load_groundtruth(self):
         print(self._runRes)
         with open(self._runRes, 'r') as f:
             csv_reader = csv.reader(f, delimiter='\t', quoting=csv.QUOTE_NONE)
@@ -586,56 +566,54 @@ class Retrieval_Data_Util:
             for row in csv_reader:
                 if len(row) < 5: continue
                 if not self.is_number(row[1]): continue
-                q.append([row[0], row[1]]) # label
-                d.append(surt(row[4])) # url
+                q.append([row[0], row[1]])  # label
+                d.append(surt(row[4]))  # url
             f.close()
-        return d,q
+        return d, q
 
     def get_label(self, d, q):
-        '''
+        """
         return binary relevance
         :param d:
         :param q:
         :return:
-        '''
+        """
         return (d, q) in self.doc_query_pairs
 
 
 class Utilities:
-
-
     twolabels = False
 
     @staticmethod
-    def getIntancesFromQueries(queries, pairDict, qv, cache=False, h5py_path=None, type=None):
-        newData = []
-        newLabel = []
-        newQueries = []
+    def get_intances_from_queries(queries, pair_dict, qv, cache=False, h5py_path=None, type=None):
+        new_data = []
+        new_label = []
+        new_queries = []
         i = 0
         for q in queries:
-            docs = pairDict[q]
+            docs = pair_dict[q]
             for doc in docs:
-                newData.append(doc[0])
-                newLabel.append([(q).encode('utf8'), doc[1]])
-                newQueries.append(qv[i])
+                new_data.append(doc[0])
+                new_label.append([(q).encode('utf8'), doc[1]])
+                new_queries.append(qv[i])
             i += 1
 
         if not cache:
-            return np.array(newData), np.array(newLabel), np.array(newQueries)
+            return np.array(new_data), np.array(new_label), np.array(new_queries)
 
         else:
-            #loop over h5py in batches
+            # loop over h5py in batches
             batch_size = 10000
-            batches_list = list(range(int(ceil(float(len(newData)) / batch_size))))
+            batches_list = list(range(int(ceil(float(len(new_data)) / batch_size))))
             with h5py.File(h5py_path, 'a') as hf:
                 # loop over batches
                 for n, i in enumerate(batches_list):
                     i_s = i * batch_size  # index of the first instance in the batch
-                    i_e = min([(i + 1) * batch_size, len(newData)])  # index of the last instance in the batch
+                    i_e = min([(i + 1) * batch_size, len(new_data)])  # index of the last instance in the batch
 
-                    b_data = newData[i_s:i_e]
-                    b_label = newLabel[i_s:i_e]
-                    b_queries = newQueries[i_s:i_e]
+                    b_data = new_data[i_s:i_e]
+                    b_label = new_label[i_s:i_e]
+                    b_queries = new_queries[i_s:i_e]
 
                     if type + "_dataset" in hf.keys():
                         hf[type + "_dataset"].resize((hf[type + "_dataset"].shape[0] + len(b_data)), axis=0)
@@ -655,13 +633,6 @@ class Utilities:
                                           maxshape=(None, len(b_queries[0])), chunks=True,
                                           compression="gzip", compression_opts=6)
 
-
-
-
-
-
-
-
     @staticmethod
     def shufflize(data, label, train_ratio, valid_ratio, test_ratio):
         assert len(data) == len(label)
@@ -669,13 +640,12 @@ class Utilities:
         Shuffle per queries
         '''
 
-        pairDict = Utilities.buildQueryDocDict(data, label, False)
+        pair_dict = Utilities.build_query_doc_dict(data, label, False)
 
-        queries = np.array(list(pairDict.keys()))
+        queries = np.array(list(pair_dict.keys()))
         perm = np.random.permutation(len(queries))
 
         queries = queries[perm]
-
 
         train_size, valid_size, test_size = int(train_ratio * len(queries)), int(valid_ratio * len(queries)), int(
             test_ratio * len(queries))
@@ -685,8 +655,7 @@ class Utilities:
         train_queries = queries[start_tr:end_tr]
         valid_queries = queries[start_v:end_v]
         test_queries = queries[start_te:end_te]
-        return train_queries, valid_queries, test_queries, pairDict
-
+        return train_queries, valid_queries, test_queries, pair_dict
 
     @staticmethod
     def recursive_glob(treeroot, pattern):
@@ -731,10 +700,10 @@ class Utilities:
 
     @staticmethod
     def ranknorm():
-        ranks = list(range(100,0,-1))
+        ranks = list(range(100, 0, -1))
         r_norms = [Utilities.transform_rank(r) for r in ranks] if not Utilities.twolabels \
             else [Utilities.transform_bin_rank(r) for r in ranks]
-            # else Utilities.softmax(ranks)
+        # else Utilities.softmax(ranks)
 
         return r_norms
 
@@ -780,31 +749,31 @@ class Utilities:
     def transform_ordinal(rank):
         rs = [0] * 10
         for i in range(0, len(rs)):
-            if i <= rank * 10: rs[i] = 1
-            else: rs[i] = 0
+            if i <= rank * 10:
+                rs[i] = 1
+            else:
+                rs[i] = 0
         return rs
-
 
     @staticmethod
     def transform_ordinal_rank(labels):
-        ordinalLabels = np.empty((len(labels), 10))
+        ordinal_labels = np.empty((len(labels), 10))
 
         for i in range(0, len(labels)):
-              ordinalLabels[i] = Utilities.transform_ordinal(float(labels[i][1]))
+            ordinal_labels[i] = Utilities.transform_ordinal(float(labels[i][1]))
 
-        return ordinalLabels
-
+        return ordinal_labels
 
     @staticmethod
-    def buildQueryDocDict2(data, labels, queries, eval):
-        '''
+    def build_query_doc_dict_h5py(data, labels, queries, eval):
+        """
 
         :param data: h5py file
         :param labels: h5py file
         :param queries: query vector, h5py file
         :param eval:
         :return:
-        '''
+        """
         print('start')
         pair_dict = {}
 
@@ -813,8 +782,8 @@ class Utilities:
         batches_list = list(range(int(ceil(float(len(data)) / batch_size))))
         # loop over batches
         for n, i in enumerate(batches_list):
-            i_s = i * batch_size # index of the first instance in the batch
-            i_e = min([(i + 1) * batch_size, len(data)]) # index of the last instance in the batch
+            i_s = i * batch_size  # index of the first instance in the batch
+            i_e = min([(i + 1) * batch_size, len(data)])  # index of the last instance in the batch
 
             b_data = data[i_s:i_e, :]
             b_labels = labels[i_s:i_e, :]
@@ -839,14 +808,14 @@ class Utilities:
         return pair_dict
 
     @staticmethod
-    def buildQueryDocDict(data, labels, eval):
-        '''
+    def build_query_doc_dict(data, labels, eval):
+        """
 
         :param data:
         :param labels:
         :param eval:
         :return:
-        '''
+        """
         pair_dict = {}
         for i in range(0, len(data)):
             q = labels[i][0]
@@ -864,7 +833,6 @@ class Utilities:
                     pair_dict[q].append([data[i], float(labels[i][1])])
         return pair_dict
 
-
     @staticmethod
     def transform_pairwise(data, labels, queries, h5py_path=None, prob=False, eval=False):
         """Transforms data into pairs with balanced labels for ranking"""
@@ -872,7 +840,7 @@ class Utilities:
         assert len(data) == len(labels)
         assert len(data) == len(queries)
         print('start')
-        pair_dict = Utilities.buildQueryDocDict2(data, labels, queries, eval)
+        pair_dict = Utilities.build_query_doc_dict_h5py(data, labels, queries, eval)
         print('done')
         if not eval:
 
@@ -882,35 +850,21 @@ class Utilities:
             # label_new = np.empty((length, 1))
 
             # query - pair-wise combination scores
-            qPmatDict = {}
-
-
 
             with h5py.File(h5py_path, 'a') as hf:
-                data_left_batch = np.empty((10000,data.shape[1]))
-                data_right_batch = np.empty((10000,data.shape[1]))
-                data_queries_batch = np.empty((10000,queries.shape[1]))
-                label_new_batch = np.empty((10000,1))
+                data_left_batch = np.empty((10000, data.shape[1]))
+                data_right_batch = np.empty((10000, data.shape[1]))
+                data_queries_batch = np.empty((10000, queries.shape[1]))
+                label_new_batch = np.empty((10000, 1))
                 cnt = 0
-                idx = 0 #global buffer index
+                idx = 0  # global buffer index
 
                 for q, v in pair_dict.items():
 
                     # v: docs for q
-                    if len(v) < 3: continue
-                    # comb = itertools.combinations(range(len(v)), 2)
-                    # npairs = 0
-                    # for k, (i, j) in enumerate(comb):
-                    #     # v: docid - label
-                    #     if (v[i][0] == v[j][0]).all(): continue
-                    #     npairs += 1
+                    if len(v) < 3: continues
 
                     comb = itertools.permutations(range(len(v)), 2)
-                    # data_left = np.empty((npairs, data.shape[1]))
-                    # data_right = np.empty((npairs, data.shape[1]))
-                    # label_new = np.empty((npairs, 1))
-                    # data_queries = np.empty((npairs, queries.shape[1]))
-
 
                     for k, (i, j) in enumerate(comb):
                         # v: docid - label
@@ -976,7 +930,7 @@ class Utilities:
 
             idx = 0
             # query - pair-wise combination scores
-            qPmatDict = {}
+            q_pmat_dict = {}
             for q, v in pair_dict.items():
                 # v: docs for q
                 if len(v[0]) < 3: continue
@@ -984,27 +938,15 @@ class Utilities:
                 pmat = {}
 
                 v = np.array(v)
-                urls = v[:,2]
+                urls = v[:, 2]
                 for k, (i, j) in enumerate(comb):
                     data_left[idx] = v[i][0]
                     data_right[idx] = v[j][0]
 
-                    label_new[idx] = 0 # meaningless for eval
+                    label_new[idx] = 0  # meaningless for eval
                     data_queries[idx] = v[i][3]
                     pmat[idx] = (i, j)
                     idx += 1
-                qPmatDict[q] = (pmat, urls)
+                q_pmat_dict[q] = (pmat, urls)
 
-
-            return data_left, data_right, data_queries, label_new, qPmatDict
-
-
-
-
-
-
-
-
-
-
-
+            return data_left, data_right, data_queries, label_new, q_pmat_dict

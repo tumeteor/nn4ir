@@ -2,15 +2,17 @@ import numpy as np
 import tensorflow as tf
 import sys
 import os
+
 sys.path.insert(0, os.path.abspath('..'))
 from argparse import ArgumentParser
-from ranking.NN import NN
+from src.ranking.NN import NN
 from Util.dataloader import DataLoader
 from Util.configs import NNConfig
 
-class NN(NN):
+
+class FPNN(NN):
     def __init__(self, qsize="1k"):
-        super(NN, self).__init__()
+        super(FPNN, self).__init__()
         self.input_vector_size = NNConfig.max_doc_size
         # output vector size = 1 for scoring model
         self.output_vector_size = 1
@@ -31,16 +33,10 @@ class NN(NN):
                 tf_train_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
                 tf_train_labels = tf.placeholder(tf.float32, shape=(NNConfig.batch_size, self.output_vector_size))
 
-                # Do not load data to constant!
-                # tf_valid_dataset = tf.constant(self.valid_dataset)
-                # tf_test_dataset = tf.constant(self.test_dataset)
-
                 # create a placeholder
                 tf_valid_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
-                # tf_valid_dataset = tf.Variable(tf_valid_dataset_init)
 
                 tf_test_dataset = tf.placeholder(tf.int32, shape=(NNConfig.batch_size, self.input_vector_size))
-                # tf_test_dataset = tf.Variable(tf_test_dataset_init)
 
                 if NNConfig.regularization:
                     beta_regu = tf.placeholder(tf.float32)
@@ -50,14 +46,10 @@ class NN(NN):
 
                 # Variables.
                 def init_weights(shape):
-                    # return tf.Variable(tf.random_normal(shape, stddev=0.01))
                     return tf.Variable(tf.truncated_normal(shape))
 
                 def init_biases(shape):
                     return tf.Variable(tf.zeros(shape))
-
-                # w_h = init_weights([NNConfig.embedding_dim, NNConfig.num_hidden_nodes])
-                # b_h = init_biases([NNConfig.num_hidden_nodes])
 
                 w_o = init_weights([NNConfig.num_hidden_nodes, self.output_vector_size])
                 b_o = init_biases([self.output_vector_size])
@@ -78,7 +70,6 @@ class NN(NN):
                 self.embedded_train_expanded = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_train_dataset), [1])
                 self.embedded_valid_expanded = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_valid_dataset), [1])
                 self.embedded_test_expanded = tf.reduce_sum(tf.nn.embedding_lookup(W, tf_test_dataset), [1])
-
 
             def model(dataset, w_o, b_o, train_mode):
                 w_hs = []
@@ -109,8 +100,6 @@ class NN(NN):
             logits, w_hs = model(self.embedded_train_expanded, w_o, b_o, True)
             loss = tf.reduce_sum(tf.pow(logits - tf_train_labels, 2)) / (2 * NNConfig.batch_size)
 
-            # loss = tf.reduce_mean(tf.nn.sigmoid_cross_entropy_with_logits(logits=logits, labels=tf_train_labels))
-            # tf.nn.sigmoid_cross_entropy_with_logits instead of tf.nn.softmax_cross_entropy_with_logits for multi-label case
             if NNConfig.regularization:
                 loss += beta_regu * (sum(tf.nn.l2_loss(w_h) for w_h in w_hs) + tf.nn.l2_loss(w_o))
             if NNConfig.learning_rate_decay:
@@ -119,7 +108,6 @@ class NN(NN):
                 optimizer = tf.train.AdamOptimizer(learning_rate).minimize(loss, global_step=global_step)
             else:
                 optimizer = tf.train.AdamOptimizer(NNConfig.learning_rate).minimize(loss)
-                # optimizer = tf.train.RMSPropOptimizer(0.001, 0.9).minimize(loss)
 
             # score model: linear activation
             train_prediction = logits
@@ -135,8 +123,6 @@ class NN(NN):
                 # compute the mean of all predictions
                 accuracy = tf.reduce_sum(tf.pow(pre - lbl, 2)) / (2 * tf.cast(tf.shape(lbl)[0], tf.float32))
 
-                # accuracy = tf.reduce_mean(tf.cast(tf.nn.sigmoid_cross_entropy_with_logits(logits=pre, labels=lbl), "float"))
-
         self.log.info('running the session...')
         self.train(graph, tf_train_dataset, tf_train_labels,
                    tf_valid_dataset, tf_test_dataset, train_prediction, valid_prediction,
@@ -149,14 +135,17 @@ if __name__ == '__main__':
     parser.add_argument('-s', '--query_size', help='number of queries for training', required=False)
     parser.add_argument('-l', '--loss', help='loss function [point-wise, pair-wise]', required=False)
     args = parser.parse_args()
-    nn = NN() if args.query_size is None else NN(args.query_size)
+    nn = FPNN() if args.query_size is None else FPNN(args.query_size)
     try:
-        if args.mode == "gpu": nn.mode = "/gpu:0"
-        else: nn.mode = "/cpu:0"
+        if args.mode == "gpu":
+            nn.mode = "/gpu:0"
+        else:
+            nn.mode = "/cpu:0"
         if args.loss == "point-wise" or args.loss == "pair-wise":
             nn.log.info("learn with pair-wise loss")
             nn.lf = args.loss
-        else: nn.lf == "point-wise"
+        else:
+            nn.lf = "point-wise"
         nn.simple_NN()
         nn.log.info("done..")
     except Exception as e:

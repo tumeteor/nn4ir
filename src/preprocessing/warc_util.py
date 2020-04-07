@@ -9,12 +9,12 @@ import codecs
 from os.path import basename
 import bz2
 
-class WarcParser:
 
+class WarcParser:
     PATH_TO_WARCS = "/home/nguyen/nn4ir/data/top1k/"
 
-
-    def combineUrls(self, dir):
+    @staticmethod
+    def combine_urls(dir):
 
         urls = []
 
@@ -27,14 +27,15 @@ class WarcParser:
 
         return urls
 
-    def combineUrlLabels(self, dir):
+    @staticmethod
+    def combine_url_labels(dir):
         qIds = {}
         with open("", "r") as f:
             csv_reader = csv.reader(f, delimiter='\t', quouting=csv.QUOTE_NONE)
             for row in csv_reader:
                 qIds[row[1]] = row[0]
 
-        with open("","r") as f:
+        with open("", "r") as f:
             for subdir, dirs, files in os.walk(dir):
                 for file in files:
                     csv_reader = csv.reader(file, delimiter='\t', quoting=csv.QUOTE_NONE)
@@ -42,10 +43,8 @@ class WarcParser:
                         f.write('\t'.join((qIds[file.name], row[0], row[1])))
                         f.write('\n')
 
-
-
-
-    def trimUrlsFromCompressedFiles(self, dir):
+    @staticmethod
+    def trim_urls_from_compressed_files(dir):
 
         for subdir, dirs, files in os.walk(dir):
             for file in files:
@@ -60,13 +59,11 @@ class WarcParser:
                 source_file.close()
                 output_file.close()
 
-
-    def getUrlContentsPerQuery(self):
+    def get_url_contents_per_query(self):
         pass
 
-
-
-    def extractContentFromWarc(self, dir):
+    @staticmethod
+    def extract_content_from_warc(dir):
 
         url_content_dict = {}
 
@@ -84,18 +81,15 @@ class WarcParser:
                             uri = record.rec_headers.get_header('WARC-Target-URI')
                             timestamp = record.rec_headers.get_header('')
                             ts = pd.Timestamp(timestamp)
-                            surtUri = surt(uri)
+                            surt_uri = surt(uri)
                             html_content = record.content_stream().read()
                             if html_content is None: continue
 
-
-                            if surtUri in url_content_dict.keys():
-                                if url_content_dict[surtUri][0] >= ts:
+                            if surt_uri in url_content_dict.keys():
+                                if url_content_dict[surt_uri][0] >= ts:
                                     continue
 
                             try:
-                                #extractor = Extractor(extractor='ArticleExtractor', html=html_content)
-                                #content = extractor.getText()
                                 content = ""
                                 paragraphs = justext.justext(html_content, justext.get_stoplist("German"))
                                 for paragraph in paragraphs:
@@ -103,27 +97,18 @@ class WarcParser:
                                         content += paragraph
                                         content += "\n"
 
-                                url_content_dict[surtUri] = tuple([ts, content])
+                                url_content_dict[surt_uri] = tuple([ts, content])
                             except TypeError as terr:
-                                print uri
+                                print(terr.get_message())
                             except UnicodeDecodeError as unierr:
-                                print uri
-
-
+                                print(unierr.get_message())
 
         with io.open('docs.top1k.tsv', 'w', encoding='utf8') as csv_file:
-            writer = csv.writer(csv_file,delimiter="\t")
+            writer = csv.writer(csv_file, delimiter="\t")
             for url, doc in url_content_dict.items():
                 writer.writerow([url, doc])
 
 
-
 if __name__ == '__main__':
     parser = WarcParser()
-    parser.extractContentFromWarc(dir=parser.PATH_TO_WARCS)
-
-
-
-
-
-
+    parser.extract_content_from_warc(dir=parser.PATH_TO_WARCS)
