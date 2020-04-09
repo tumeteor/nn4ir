@@ -1,0 +1,11 @@
+src/**/__pycache__/*
+*.swp
+tests/__pycache__/*
+.vscode/
+.idea/
+.DS_Store
+fetchdata.log
+.swp
+.env
+src/__pycache__/*
+__pycache__/*
